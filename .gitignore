@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Build output
+dist/
+
+# Logs
+logs
+*.log
+
+# Editor
+.vscode/
+
+# Certificates / secrets
+*.csr
+*.pem
+*.key
+key-base64.txt
+
+# Lock file (optional — see note below)
+package-lock.json
