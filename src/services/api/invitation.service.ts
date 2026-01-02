@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // FILE: src/services/api/invitation.service.ts
 import BaseService from './base.service';
 import { API_CONFIG } from '@/config/api.config';
@@ -13,8 +14,7 @@ import type {
 
 class InvitationService extends BaseService {
   async getInvitations(
-    filters?: InvitationFilters
-  ): Promise<PaginatedResponse<InvitationCode>> {
+filters?: InvitationFilters, page?: number, limit?: number  ): Promise<PaginatedResponse<InvitationCode>> {
     return this.getPaginated<InvitationCode>(
       API_CONFIG.ENDPOINTS.ADMIN_INVITATIONS.LIST,
       filters
