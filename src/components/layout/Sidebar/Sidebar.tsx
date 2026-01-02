@@ -1,7 +1,6 @@
 // ===================================================
-// FILE: src/components/layout/Sidebar/Sidebar.tsx
+// FILE: src/components/layout/Sidebar/Sidebar.tsx (IMPROVED)
 // ===================================================
-
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -11,10 +10,14 @@ import {
   Settings,
   Activity,
   TrendingUp,
-  Database
+  Database,
+  User,
+  LogOut,
+  Radio
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useAuth } from '@/hooks';
+import { Button } from '@/components/common/Button/Button';
 
 interface NavItem {
   label: string;
@@ -23,7 +26,7 @@ interface NavItem {
 }
 
 export function Sidebar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
   const adminNavItems: NavItem[] = [
@@ -48,8 +51,13 @@ export function Sidebar() {
       icon: <BarChart3 className="h-5 w-5" />,
     },
     {
-      label: 'System',
-      href: '/admin/system/health',
+      label: 'Channels',
+      href: '/admin/channels',
+      icon: <Radio className="h-5 w-5" />,
+    },
+    {
+      label: 'System Health',
+      href: '/admin/system',
       icon: <Activity className="h-5 w-5" />,
     },
   ];
@@ -71,23 +79,23 @@ export function Sidebar() {
       icon: <Database className="h-5 w-5" />,
     },
     {
-      label: 'Settings',
-      href: '/settings',
-      icon: <Settings className="h-5 w-5" />,
+      label: 'Channels',
+      href: '/channels',
+      icon: <Radio className="h-5 w-5" />,
     },
   ];
 
   const navItems = isAdmin ? adminNavItems : userNavItems;
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card flex flex-col">
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
         <h1 className="text-xl font-bold text-primary">Trading Bot</h1>
       </div>
 
-      {/* Navigation */}
-      <nav className="space-y-1 p-4">
+      {/* Navigation - Scrollable */}
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.href}
@@ -106,6 +114,48 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Bottom Section - Profile & Settings */}
+      <div className="border-t p-4 space-y-1">
+        <NavLink
+          to={isAdmin ? '/admin/profile' : '/profile'}
+          className={({ isActive }) =>
+            cn(
+              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              isActive
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            )
+          }
+        >
+          <User className="h-5 w-5" />
+          Profile
+        </NavLink>
+
+        <NavLink
+          to={isAdmin ? '/admin/settings' : '/settings'}
+          className={({ isActive }) =>
+            cn(
+              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              isActive
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            )
+          }
+        >
+          <Settings className="h-5 w-5" />
+          Settings
+        </NavLink>
+
+        <Button
+          variant="ghost"
+          onClick={logout}
+          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="h-5 w-5 mr-3" />
+          Logout
+        </Button>
+      </div>
     </aside>
   );
 }

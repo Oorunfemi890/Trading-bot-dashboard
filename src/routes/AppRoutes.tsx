@@ -1,8 +1,6 @@
-
 // ===================================================
-// FILE: src/routes/AppRoutes.tsx
+// FILE: src/routes/AppRoutes.tsx (UPDATED)
 // ===================================================
-
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout/AppLayout';
@@ -15,6 +13,11 @@ import RegisterPage from '@/pages/auth/RegisterPage';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import InvitationsPage from '@/pages/admin/InvitationsPage';
 import UsersPage from '@/pages/admin/UsersPage';
+import AdminAnalyticsPage from '@/pages/admin/AnalyticsPage';
+import AdminSystemPage from '@/pages/admin/SystemPage';
+import AdminChannelsPage from '@/pages/admin/ChannelsPage';
+import AdminProfilePage from '@/pages/admin/ProfilePage';
+import AdminSettingsPage from '@/pages/admin/SettingsPage';
 
 // User Pages
 import DashboardPage from '@/pages/user/DashboardPage';
@@ -41,6 +44,11 @@ export function AppRoutes() {
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="invitations" element={<InvitationsPage />} />
         <Route path="users" element={<UsersPage />} />
+        <Route path="analytics" element={<AdminAnalyticsPage />} />
+        <Route path="system" element={<AdminSystemPage />} />
+        <Route path="channels" element={<AdminChannelsPage />} />
+        <Route path="profile" element={<AdminProfilePage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
       </Route>
 
       {/* User Routes */}
