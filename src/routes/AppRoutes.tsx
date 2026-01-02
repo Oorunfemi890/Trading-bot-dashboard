@@ -13,6 +13,7 @@ import RegisterPage from '@/pages/auth/RegisterPage';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import InvitationsPage from '@/pages/admin/InvitationsPage';
 import UsersPage from '@/pages/admin/UsersPage';
+import UserDetailsPage from '@/pages/admin/UserDetailsPage';
 import AdminAnalyticsPage from '@/pages/admin/AnalyticsPage';
 import AdminSystemPage from '@/pages/admin/SystemPage';
 import AdminChannelsPage from '@/pages/admin/ChannelsPage';
@@ -44,6 +45,7 @@ export function AppRoutes() {
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="invitations" element={<InvitationsPage />} />
         <Route path="users" element={<UsersPage />} />
+        <Route path="users/:id" element={<UserDetailsPage />} />
         <Route path="analytics" element={<AdminAnalyticsPage />} />
         <Route path="system" element={<AdminSystemPage />} />
         <Route path="channels" element={<AdminChannelsPage />} />

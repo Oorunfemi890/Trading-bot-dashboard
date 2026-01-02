@@ -13,7 +13,7 @@ export function AppLayout() {
       <Header />
       
       {/* Main Content */}
-      <main className="ml-64 mt-16 p-6">
+      <main className="lg:ml-64 mt-16 p-4 md:p-6">
         <Outlet />
       </main>
     </div>

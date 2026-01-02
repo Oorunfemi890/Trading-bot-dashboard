@@ -27,8 +27,8 @@ export function ProtectedRoute({ children, requireAdmin }: ProtectedRouteProps) 
   }
 
   if (requireAdmin && user?.role !== 'admin' && user?.role !== 'super_admin') {
-    return <Navigate to="/unauthorized" replace />;
-  }
+  return <Navigate to="/unauthorized" replace />;
+}
 
   return <>{children}</>;
 }

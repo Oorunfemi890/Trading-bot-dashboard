@@ -22,17 +22,22 @@ export function useUsers(initialFilters?: UserFilters) {
   }, [page, limit, filters]);
 
   async function fetchUsers() {
-    try {
-      setLoading(true);
-      const response = await adminService.getUsers({ ...(filters as any), page, limit });
-      setUsers(response.data);
-      setTotal(response.meta.total);
-    } catch (error) {
-      toast.error('Failed to load users');
-    } finally {
-      setLoading(false);
-    }
+  if (loading) return; // Prevent multiple simultaneous calls
+  
+  try {
+    setLoading(true);
+    const response = await adminService.getUsers({ ...(filters as any), page, limit });
+    setUsers(response.data);
+    setTotal(response.meta.total);
+  } catch (error) {
+    console.error('Failed to load users:', error);
+    toast.error('Failed to load users');
+    setUsers([]); // Clear users on error
+    setTotal(0);
+  } finally {
+    setLoading(false);
   }
+}
 
   async function suspendUser(id: string, reason?: string) {
     try {

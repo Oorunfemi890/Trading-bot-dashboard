@@ -26,7 +26,7 @@ export default function UsersPage() {
   const totalPages = Math.ceil(total / 20);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Users</h1>
