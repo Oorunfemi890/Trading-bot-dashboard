@@ -1,4 +1,3 @@
-
 // ===================================================
 // FILE: src/components/common/Card/Card.tsx
 // ===================================================
@@ -6,20 +5,9 @@
 import { HTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  title?: string;
-  subtitle?: string;
-  headerAction?: React.ReactNode;
-}
+interface CardProps extends HTMLAttributes<HTMLDivElement> {}
 
-export function Card({ 
-  title, 
-  subtitle, 
-  headerAction, 
-  children, 
-  className,
-  ...props 
-}: CardProps) {
+export function Card({ className, children, ...props }: CardProps) {
   return (
     <div
       className={cn(
@@ -28,24 +16,67 @@ export function Card({
       )}
       {...props}
     >
-      {(title || subtitle || headerAction) && (
-        <div className="flex items-center justify-between p-6 pb-4">
-          <div>
-            {title && (
-              <h3 className="text-2xl font-semibold leading-none tracking-tight">
-                {title}
-              </h3>
-            )}
-            {subtitle && (
-              <p className="text-sm text-muted-foreground mt-1.5">
-                {subtitle}
-              </p>
-            )}
-          </div>
-          {headerAction && <div>{headerAction}</div>}
-        </div>
+      {children}
+    </div>
+  );
+}
+
+interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {}
+
+export function CardHeader({ className, children, ...props }: CardHeaderProps) {
+  return (
+    <div className={cn('flex flex-col space-y-1.5 p-6', className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+interface CardTitleProps extends HTMLAttributes<HTMLHeadingElement> {}
+
+export function CardTitle({ className, children, ...props }: CardTitleProps) {
+  return (
+    <h3
+      className={cn(
+        'text-2xl font-semibold leading-none tracking-tight',
+        className
       )}
-      <div className="p-6 pt-0">{children}</div>
+      {...props}
+    >
+      {children}
+    </h3>
+  );
+}
+
+interface CardDescriptionProps extends HTMLAttributes<HTMLParagraphElement> {}
+
+export function CardDescription({
+  className,
+  children,
+  ...props
+}: CardDescriptionProps) {
+  return (
+    <p className={cn('text-sm text-muted-foreground', className)} {...props}>
+      {children}
+    </p>
+  );
+}
+
+interface CardContentProps extends HTMLAttributes<HTMLDivElement> {}
+
+export function CardContent({ className, children, ...props }: CardContentProps) {
+  return (
+    <div className={cn('p-6 pt-0', className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {}
+
+export function CardFooter({ className, children, ...props }: CardFooterProps) {
+  return (
+    <div className={cn('flex items-center p-6 pt-0', className)} {...props}>
+      {children}
     </div>
   );
 }

@@ -4,11 +4,11 @@
 // ===================================================
 import { useEffect, useState } from 'react';
 import { Users, DollarSign, TrendingUp, Activity } from 'lucide-react';
-import AppLayout from '@/components/layout/AppLayout/AppLayout';
-import StatsCard from '@/components/features/dashboard/StatsCard';
-import Card, { CardContent, CardHeader, CardTitle } from '@/components/common/Card/Card';
+import { AppLayout } from '@/components/layout/AppLayout/AppLayout';
+import { StatsCard } from '@/components/features/dashboard/StatsCard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card/Card';
 import { adminService } from '@/services/api';
-import Spinner from '@/components/common/Loader/Spinner';
+import { Spinner } from '@/components/common/Spinner/Spinner';
 import { toast } from 'sonner';
 
 export default function AdminDashboardPage() {

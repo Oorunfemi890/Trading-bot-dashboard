@@ -1,7 +1,5 @@
 /* src/index.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -60,29 +58,15 @@
     --info: 199 89% 48%;
     --info-foreground: 198 93% 96%;
   }
-}
 
-@layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-}
 
-@layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .text-balance {
-    text-wrap: balance;
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
@@ -93,15 +77,31 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted/20;
+  background-color: hsl(var(--muted) / 0.2);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-md;
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 0.375rem;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Text balance utility */
+.text-balance {
+  text-wrap: balance;
 }
 
 /* Transitions */
