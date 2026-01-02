@@ -1,24 +1,40 @@
-import { RouterProvider } from 'react-router-dom';
+// ===================================================
+// FILE: src/App.tsx (COMPLETE FINAL VERSION)
+// ===================================================
+
+import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { WebSocketProvider } from '@/context/WebSocketContext';
-import { router } from '@/routes';
+import { NotificationProvider } from '@/context/NotificationContext';
+import { ModalProvider } from '@/context/ModalContext';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary/ErrorBoundary';
+import { AppRoutes } from '@/routes/AppRoutes';
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <WebSocketProvider>
-          <RouterProvider router={router} />
-          <Toaster 
-            position="top-right" 
-            richColors 
-            closeButton 
-            duration={4000}
-          />
-        </WebSocketProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ThemeProvider>
+          <AuthProvider>
+            <WebSocketProvider>
+              <NotificationProvider>
+                <ModalProvider>
+                  <AppRoutes />
+                  <Toaster 
+                    position="top-right" 
+                    richColors 
+                    closeButton 
+                    duration={4000}
+                    expand={false}
+                  />
+                </ModalProvider>
+              </NotificationProvider>
+            </WebSocketProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
