@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // ===================================================
 // FILE: src/pages/admin/UserDetailsPage.tsx (NEW)
 // ===================================================

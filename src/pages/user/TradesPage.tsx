@@ -1,95 +1,127 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // ===================================================
 // FILE: src/pages/user/TradesPage.tsx
 // ===================================================
 
-import { Card } from '@/components/common/Card/Card';
-import { Badge } from '@/components/common/Badge/Badge';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/common/Table/Table';
-import { Pagination } from '@/components/common/Pagination/Pagination';
+import { useState, useEffect } from 'react';
 import { useTrades } from '@/hooks';
-import { formatDate, formatCurrency } from '@/utils';
+import { TradeList } from '@/components/features/trades/TradeList';
+import { TradeFilters } from '@/components/features/trades/TradeFilters';
+import { TradeStats } from '@/components/features/trades/TradeStats';
+import { Button } from '@/components/common/Button/Button';
+import { Loader } from '@/components/common/Loader';
+import { Filter, Download, RefreshCw } from 'lucide-react';
 
 export default function TradesPage() {
-  const { trades, loading, total, page, setPage } = useTrades();
+  const { 
+    trades, 
+    stats, 
+    isLoading, 
+    fetchTrades, 
+    fetchStats 
+  } = useTrades();
 
-  const totalPages = Math.ceil(total / 20);
+  const [filters, setFilters] = useState({
+    status: 'all',
+    dateFrom: '',
+    dateTo: '',
+    symbol: '',
+  });
+
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    fetchTrades(filters);
+    fetchStats();
+  }, [filters]);
+
+  const handleRefresh = () => {
+    fetchTrades(filters);
+    fetchStats();
+  };
+
+  const handleExport = () => {
+    // Export trades to CSV
+    const csv = trades.map(trade => ({
+      ID: trade.id,
+      Symbol: trade.symbol,
+      Direction: trade.direction,
+      Status: trade.status,
+      'Net Profit': trade.netProfit,
+      'Opened At': new Date(trade.openedAt).toLocaleString(),
+      'Closed At': trade.closedAt ? new Date(trade.closedAt).toLocaleString() : 'Open',
+    }));
+
+    const csvContent = [
+      Object.keys(csv[0]).join(','),
+      ...csv.map(row => Object.values(row).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `trades_${new Date().toISOString()}.csv`;
+    a.click();
+  };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Trades</h1>
-        <p className="text-muted-foreground mt-2">View your trading history</p>
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            My Trades
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            View and manage your trading history
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            leftIcon={<Filter className="h-4 w-4" />}
+          >
+            Filters
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            leftIcon={<RefreshCw className="h-4 w-4" />}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleExport}
+            leftIcon={<Download className="h-4 w-4" />}
+          >
+            Export
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Symbol</TableHead>
-              <TableHead>Direction</TableHead>
-              <TableHead>Positions</TableHead>
-              <TableHead>Net Profit</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Opened</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {trades.map((trade) => (
-              <TableRow key={trade.id}>
-                <TableCell className="font-medium">{trade.symbol}</TableCell>
-                <TableCell>
-                  <Badge variant={trade.direction === 'buy' ? 'success' : 'destructive'}>
-                    {trade.direction.toUpperCase()}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {trade.positionsFilled} / {trade.totalPositions}
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={
-                      trade.netProfit > 0
-                        ? 'text-success'
-                        : trade.netProfit < 0
-                        ? 'text-destructive'
-                        : ''
-                    }
-                  >
-                    {formatCurrency(trade.netProfit)}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      trade.status === 'open'
-                        ? 'info'
-                        : trade.status === 'closed'
-                        ? 'default'
-                        : 'warning'
-                    }
-                  >
-                    {trade.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {trade.openedAt ? formatDate(trade.openedAt) : 'Pending'}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      {/* Stats Overview */}
+      <TradeStats stats={stats} />
 
-        {totalPages > 1 && (
-          <div className="mt-4 flex justify-center">
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-            />
-          </div>
-        )}
-      </Card>
+      {/* Filters */}
+      {showFilters && (
+        <TradeFilters
+          filters={filters}
+          onChange={setFilters}
+          onClose={() => setShowFilters(false)}
+        />
+      )}
+
+      {/* Trades List */}
+      {isLoading ? (
+        <div className="flex h-96 items-center justify-center">
+          <Loader />
+        </div>
+      ) : (
+        <TradeList trades={trades} onRefresh={handleRefresh} />
+      )}
     </div>
   );
 }

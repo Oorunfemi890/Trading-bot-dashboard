@@ -3,7 +3,7 @@
 // ===================================================
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card/Card';
-import { StatsCard } from '@/components/features/dashboard/StatsCard';
+import { StatsCard } from '@/components/features/dashboard/admin/StatsCard';
 import { adminService } from '@/services/api';
 import { toast } from 'sonner';
 import { TrendingUp, DollarSign, Activity, Users } from 'lucide-react';

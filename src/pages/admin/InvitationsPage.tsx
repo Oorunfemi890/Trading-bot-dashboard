@@ -2,10 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // ===================================================
 // FILE: src/pages/admin/InvitationsPage.tsx
+// UPDATE: Added eye icon to view invitation details
 // ===================================================
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Eye } from 'lucide-react';
 import { Card } from '@/components/common/Card/Card';
 import { Button } from '@/components/common/Button/Button';
 import { Badge } from '@/components/common/Badge/Badge';
@@ -14,10 +15,14 @@ import { useInvitations } from '@/hooks';
 import { formatDate, formatCurrency } from '@/utils';
 import { Modal } from '@/components/common/Modal/Modal';
 import { Input } from '@/components/common/Input/Input';
+import { InvitationDetailModal } from '@/components/features/admin/InvitationDetailModal';
 
 export default function InvitationsPage() {
   const { invitations, loading, createInvitation } = useInvitations();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedInvitation, setSelectedInvitation] = useState<any>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  
   const [formData, setFormData] = useState({
     tier: 'starter',
     price: 29,
@@ -33,6 +38,11 @@ export default function InvitationsPage() {
     } catch (error) {
       // Error handled by hook with toast
     }
+  }
+
+  function handleViewDetails(invitation: any) {
+    setSelectedInvitation(invitation);
+    setShowDetailModal(true);
   }
 
   return (
@@ -58,6 +68,7 @@ export default function InvitationsPage() {
               <TableHead>Uses</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -73,6 +84,17 @@ export default function InvitationsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>{formatDate(inv.createdAt)}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleViewDetails(inv)}
+                    className="h-8 w-8 p-0"
+                    title="View Details"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -120,6 +142,13 @@ export default function InvitationsPage() {
           />
         </div>
       </Modal>
+
+      {/* Detail Modal */}
+      <InvitationDetailModal
+        invitation={selectedInvitation}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+      />
     </div>
   );
 }

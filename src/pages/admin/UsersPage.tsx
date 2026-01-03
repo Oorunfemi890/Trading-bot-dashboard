@@ -1,26 +1,59 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// ===================================================
-// FILE: src/pages/admin/UsersPage.tsx
-// ===================================================
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState } from 'react';
-import { Card } from '@/components/common/Card/Card';
-import { Button } from '@/components/common/Button/Button';
-import { Badge } from '@/components/common/Badge/Badge';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/common/Table/Table';
-import { SearchBar } from '@/components/common/SearchBar/SearchBar';
-import { Pagination } from '@/components/common/Pagination/Pagination';
-import { useUsers } from '@/hooks';
-import { formatDate } from '@/utils';
-import { Ban, CheckCircle, Trash2 } from 'lucide-react';
+// ===================================================
+// FILE: src/pages/admin/UsersPage.tsx (UPDATED WITH EYE ICON)
+// ===================================================
+import { useState } from "react";
+import { Eye } from "lucide-react";
+import { Card } from "@/components/common/Card/Card";
+import { Button } from "@/components/common/Button/Button";
+import { Badge } from "@/components/common/Badge/Badge";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/common/Table/Table";
+import { SearchBar } from "@/components/common/SearchBar/SearchBar";
+import { Pagination } from "@/components/common/Pagination/Pagination";
+import { useUsers } from "@/hooks";
+import { formatDate } from "@/utils";
+import { UserDetailModal } from "@/components/features/admin/UserDetailModal";
 
 export default function UsersPage() {
-  const { users, loading, total, page, setPage, setFilters, suspendUser, activateUser } = useUsers();
-  const [search, setSearch] = useState('');
+  const { users, loading, total, page, setPage, setFilters } = useUsers();
+  const [search, setSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUserStats, setSelectedUserStats] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   function handleSearch(query: string) {
     setSearch(query);
     setFilters({ search: query });
+  }
+
+  async function handleViewDetails(user: any) {
+    try {
+      // Fetch full user details with statistics
+      const response = await fetch(`/api/v1/admin/users/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSelectedUser(data.data);
+        setSelectedUserStats(data.data.statistics);
+        setShowDetailModal(true);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user details:", error);
+    }
   }
 
   const totalPages = Math.ceil(total / 20);
@@ -64,11 +97,11 @@ export default function UsersPage() {
                 <TableCell>
                   <Badge
                     variant={
-                      user.status === 'active'
-                        ? 'success'
-                        : user.status === 'suspended'
-                        ? 'destructive'
-                        : 'warning'
+                      user.status === "active"
+                        ? "success"
+                        : user.status === "suspended"
+                        ? "destructive"
+                        : "warning"
                     }
                   >
                     {user.status}
@@ -76,27 +109,14 @@ export default function UsersPage() {
                 </TableCell>
                 <TableCell>{formatDate(user.createdAt)}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    {user.status === 'active' ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => suspendUser(user.id)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Ban className="h-4 w-4 text-destructive" />
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => activateUser(user.id)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <CheckCircle className="h-4 w-4 text-success" />
-                      </Button>
-                    )}
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleViewDetails(user)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -113,6 +133,14 @@ export default function UsersPage() {
           </div>
         )}
       </Card>
+
+      {/* Detail Modal */}
+      <UserDetailModal
+        user={selectedUser}
+        userStats={selectedUserStats}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+      />
     </div>
   );
 }

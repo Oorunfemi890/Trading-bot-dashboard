@@ -1,145 +1,78 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-
 // ===================================================
 // FILE: src/pages/user/SettingsPage.tsx
 // ===================================================
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/common/Card/Card';
-import { Button } from '@/components/common/Button/Button';
-import { Input } from '@/components/common/Input/Input';
+import { useState } from 'react';
 import { Tabs } from '@/components/common/Tabs/Tabs';
-import { userService } from '@/services/api';
-import { toast } from 'sonner';
-import type { UserSettings } from '@/types';
+import { ProfileSettings } from '@/components/features/settings/ProfileSettings';
+import { RiskManagement } from '@/components/features/settings/RiskManagement';
+import { TradingSettings } from '@/components/features/settings/TradingSettings';
+import { NotificationSettings } from '@/components/features/settings/NotificationSettings';
+import { TradingAccountForm } from '@/components/features/settings/TradingAccountForm';
+import { 
+  User, 
+  ShieldAlert, 
+  Bell, 
+  Wallet,
+  Cog
+} from 'lucide-react';
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<UserSettings | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  async function fetchSettings() {
-    try {
-      const data = await userService.getSettings();
-      setSettings(data);
-    } catch (error) {
-      toast.error('Failed to load settings');
-    }
-  }
-
-  async function handleSave() {
-    if (!settings) return;
-
-    try {
-      setLoading(true);
-      await userService.updateSettings(settings);
-      toast.success('Settings saved successfully');
-    } catch (error) {
-      toast.error('Failed to save settings');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (!settings) return null;
+  const tabs = [
+    {
+      id: 'profile',
+      label: 'Profile',
+      icon: <User className="h-4 w-4" />,
+      content: <ProfileSettings />,
+    },
+    {
+      id: 'risk',
+      label: 'Risk Management',
+      icon: <ShieldAlert className="h-4 w-4" />,
+      content: <RiskManagement />,
+    },
+    {
+      id: 'trading',
+      label: 'Trading Preferences',
+      icon: <Cog className="h-4 w-4" />,
+      content: <TradingSettings />,
+    },
+    {
+      id: 'account',
+      label: 'Trading Account',
+      icon: <Wallet className="h-4 w-4" />,
+      content: <TradingAccountForm />,
+    },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      icon: <Bell className="h-4 w-4" />,
+      content: <NotificationSettings />,
+    },
+  ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-2">Manage your trading preferences</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Settings
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
+          Manage your account and trading preferences
+        </p>
       </div>
 
-      <Tabs
-        tabs={[
-          {
-            label: 'Risk Management',
-            value: 'risk',
-            content: (
-              <Card>
-                <div className="space-y-4">
-                  <Input
-                    label="Balance Usage (%)"
-                    type="number"
-                    value={settings.balanceUsagePercentage}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        balanceUsagePercentage: Number(e.target.value),
-                      })
-                    }
-                  />
-
-                  <Input
-                    label="Positions Per Trade"
-                    type="number"
-                    value={settings.positionsPerTrade}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        positionsPerTrade: Number(e.target.value),
-                      })
-                    }
-                  />
-
-                  <Input
-                    label="Max Concurrent Trades"
-                    type="number"
-                    value={settings.maxConcurrentTrades}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        maxConcurrentTrades: Number(e.target.value),
-                      })
-                    }
-                  />
-
-                  <Button onClick={handleSave} loading={loading}>
-                    Save Changes
-                  </Button>
-                </div>
-              </Card>
-            ),
-          },
-          {
-            label: 'Notifications',
-            value: 'notifications',
-            content: (
-              <Card>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Email Notifications</p>
-                      <p className="text-sm text-muted-foreground">
-                        Receive email alerts for trades
-                      </p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.emailNotificationsEnabled}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          emailNotificationsEnabled: e.target.checked,
-                        })
-                      }
-                      className="h-4 w-4"
-                    />
-                  </div>
-
-                  <Button onClick={handleSave} loading={loading}>
-                    Save Changes
-                  </Button>
-                </div>
-              </Card>
-            ),
-          },
-        ]}
-      />
+      {/* Settings Tabs */}
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <Tabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
+      </div>
     </div>
   );
 }

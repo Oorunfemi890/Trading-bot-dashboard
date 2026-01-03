@@ -1,1 +1,1 @@
-export { StatsCard } from './StatsCard';
+export { StatsCard } from './admin/StatsCard';

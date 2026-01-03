@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // ===================================================
-// FILE: src/pages/admin/ChannelsPage.tsx (NEW)
+// FILE: src/pages/admin/ChannelsPage.tsx
 // ===================================================
+
 import { useState, useEffect } from 'react';
-import { Plus, Radio, Eye, EyeOff, Trash2, Edit } from 'lucide-react';
+import { Plus, Radio, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { Card } from '@/components/common/Card/Card';
 import { Button } from '@/components/common/Button/Button';
 import { Badge } from '@/components/common/Badge/Badge';
@@ -22,6 +25,8 @@ export default function AdminChannelsPage() {
     username: '',
     title: '',
     description: '',
+    telegramLink: '',
+    telegramName: '',
   });
 
   useEffect(() => {
@@ -41,13 +46,38 @@ export default function AdminChannelsPage() {
 
   async function handleAddChannel() {
     try {
-      await channelService.addChannel({ channelId: formData.channelId });
+      if (!formData.channelId.trim()) {
+        toast.error('Channel ID is required');
+        return;
+      }
+
+      if (!formData.title.trim()) {
+        toast.error('Channel title is required');
+        return;
+      }
+
+      await channelService.addChannel({
+        channelId: formData.channelId.trim(),
+        username: formData.username.trim() || undefined,
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
+        telegramLink: formData.telegramLink.trim() || undefined,
+        telegramName: formData.telegramName.trim() || undefined,
+      });
+
       toast.success('Channel added successfully');
       setShowAddModal(false);
-      setFormData({ channelId: '', username: '', title: '', description: '' });
+      setFormData({
+        channelId: '',
+        username: '',
+        title: '',
+        description: '',
+        telegramLink: '',
+        telegramName: '',
+      });
       fetchChannels();
-    } catch (error) {
-      toast.error('Failed to add channel');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add channel');
     }
   }
 
@@ -89,97 +119,101 @@ export default function AdminChannelsPage() {
       </div>
 
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Channel</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Signals</TableHead>
-              <TableHead>Success Rate</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {channels.map((channel) => {
-              const successRate = channel.totalSignals > 0
-                ? ((channel.successfulSignals / channel.totalSignals) * 100).toFixed(1)
-                : '0.0';
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Channel</TableHead>
+                <TableHead>Username</TableHead>
+                <TableHead>Signals</TableHead>
+                <TableHead>Success Rate</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {channels.map((channel) => {
+                const successRate = channel.totalSignals > 0
+                  ? ((channel.successfulSignals / channel.totalSignals) * 100).toFixed(1)
+                  : '0.0';
 
-              return (
-                <TableRow key={channel.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Radio className="h-4 w-4 text-primary" />
-                      <div>
-                        <p className="font-medium">{channel.title}</p>
-                        {channel.description && (
-                          <p className="text-xs text-muted-foreground">
-                            {channel.description.substring(0, 50)}...
-                          </p>
-                        )}
+                return (
+                  <TableRow key={channel.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Radio className="h-4 w-4 text-primary" />
+                        <div>
+                          <p className="font-medium">{channel.title}</p>
+                          {channel.description && (
+                            <p className="text-xs text-muted-foreground">
+                              {channel.description.substring(0, 50)}...
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {channel.username ? (
-                      <span className="font-mono text-sm">@{channel.username}</span>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">Private</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <p className="font-semibold">{channel.totalSignals}</p>
-                      <p className="text-muted-foreground">total</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-muted rounded-full h-2">
-                        <div
-                          className="bg-success h-2 rounded-full"
-                          style={{ width: `${successRate}%` }}
-                        />
+                    </TableCell>
+                    <TableCell>
+                      {channel.username ? (
+                        <span className="font-mono text-sm">@{channel.username}</span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Private</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <p className="font-semibold">{channel.totalSignals}</p>
+                        <p className="text-muted-foreground">total</p>
                       </div>
-                      <span className="text-sm font-medium">{successRate}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={channel.isActive ? 'success' : 'destructive'}>
-                      {channel.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleChannelStatus(channel.id, channel.isActive)}
-                        className="h-8 w-8 p-0"
-                      >
-                        {channel.isActive ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-muted rounded-full h-2">
+                          <div
+                            className="bg-success h-2 rounded-full"
+                            style={{ width: `${successRate}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium">{successRate}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={channel.isActive ? 'success' : 'destructive'}>
+                        {channel.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleChannelStatus(channel.id, channel.isActive)}
+                          className="h-8 w-8 p-0"
+                          title={channel.isActive ? 'Deactivate' : 'Activate'}
+                        >
+                          {channel.isActive ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteChannel(channel.id)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteChannel(channel.id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </Card>
 
       {/* Add Channel Modal */}
@@ -202,12 +236,60 @@ export default function AdminChannelsPage() {
             placeholder="-1001234567890"
             value={formData.channelId}
             onChange={(e) => setFormData({ ...formData, channelId: e.target.value })}
-            helperText="The numeric ID of the Telegram channel"
+            helperText="The numeric ID of the Telegram channel (required)"
             required
           />
 
+          <Input
+            label="Channel Title"
+            placeholder="Premium Forex Signals"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            helperText="Display name for the channel (required)"
+            required
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Username"
+              placeholder="premium_signals"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              helperText="Channel handle (optional)"
+            />
+
+            <Input
+              label="Telegram Name"
+              placeholder="@PremiumSignals"
+              value={formData.telegramName}
+              onChange={(e) => setFormData({ ...formData, telegramName: e.target.value })}
+              helperText="Display name with @ (optional)"
+            />
+          </div>
+
+          <Input
+            label="Telegram Link"
+            placeholder="https://t.me/premium_signals"
+            value={formData.telegramLink}
+            onChange={(e) => setFormData({ ...formData, telegramLink: e.target.value })}
+            helperText="Full t.me link (optional)"
+          />
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              placeholder="Channel description..."
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
+            />
+          </div>
+
           <p className="text-sm text-muted-foreground">
-            The bot will automatically fetch channel details after adding.
+            The bot will automatically fetch additional channel details if available.
           </p>
         </div>
       </Modal>
