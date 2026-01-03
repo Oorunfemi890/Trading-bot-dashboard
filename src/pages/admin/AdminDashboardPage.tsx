@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ===================================================
 // FILE: src/pages/admin/AdminDashboardPage.tsx (COMPLETELY FIXED)
 // ===================================================

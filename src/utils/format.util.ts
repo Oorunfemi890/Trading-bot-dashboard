@@ -1,5 +1,5 @@
 // ===================================================
-// FILE: src/utils/format.util.ts
+// FILE: src/utils/format.util.ts (FIXED - ALL EXPORTS)
 // ===================================================
 
 /**
@@ -33,6 +33,71 @@ export function formatNumber(num: number, decimals: number = 2): string {
  */
 export function formatPercentage(value: number, decimals: number = 2): string {
   return `${value.toFixed(decimals)}%`;
+}
+
+/**
+ * Format date to display format
+ */
+export function formatDate(
+  date: Date | string,
+  format: 'short' | 'long' | 'time' | 'datetime' = 'short'
+): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  if (isNaN(dateObj.getTime())) {
+    return 'Invalid date';
+  }
+
+  switch (format) {
+    case 'short':
+      return dateObj.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    case 'long':
+      return dateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    case 'time':
+      return dateObj.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    case 'datetime':
+      return dateObj.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    default:
+      return dateObj.toLocaleDateString('en-US');
+  }
+}
+
+/**
+ * Format relative time (e.g., "2 hours ago")
+ */
+export function formatRelativeTime(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - dateObj.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) return `${diffSecs} seconds ago`;
+  if (diffMins < 60) return `${diffMins} minutes ago`;
+  if (diffHours < 24) return `${diffHours} hours ago`;
+  if (diffDays < 30) return `${diffDays} days ago`;
+  
+  return formatDate(dateObj);
 }
 
 /**
@@ -109,4 +174,18 @@ export function formatEnumValue(value: string): string {
     .split('_')
     .map(word => capitalize(word))
     .join(' ');
+}
+
+/**
+ * Format pips
+ */
+export function formatPips(pips: number): string {
+  return `${pips.toFixed(1)} pips`;
+}
+
+/**
+ * Format lot size
+ */
+export function formatLotSize(lotSize: number): string {
+  return lotSize.toFixed(2);
 }

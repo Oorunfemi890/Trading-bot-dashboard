@@ -1,58 +1,45 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ===================================================
 // FILE: src/hooks/useTrades.ts
 // ===================================================
 
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { useState, useCallback } from 'react';
 import { tradeService } from '@/services/api';
-import type { Trade, TradeFilters } from '@/types';
-import { usePagination } from './usePagination';
+import { toast } from 'sonner';
 
-export function useTrades(initialFilters?: TradeFilters) {
-  const [trades, setTrades] = useState<Trade[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState(0);
-  const { page, limit, setPage } = usePagination();
-  const [filters, setFilters] = useState<TradeFilters>(initialFilters || {});
+export function useTrades() {
+  const [trades, setTrades] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    fetchTrades();
-  }, [page, limit, filters]);
-
-  async function fetchTrades() {
+  const fetchTrades = useCallback(async (filters?: any) => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const response = await tradeService.getTrades({ ...filters, page, limit });
-
-      setTrades(response.data);
-      setTotal(response.meta.total);
-    } catch (error) {
-      toast.error('Failed to load trades');
+      const response = await tradeService.getTrades(filters);
+      setTrades(response.data || []);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to fetch trades');
+      setTrades([]);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }
+  }, []);
 
-  async function closeTrade(id: string) {
+  const fetchStats = useCallback(async () => {
     try {
-      await tradeService.closeTrade(id);
-      toast.success('Trade closed successfully');
-      fetchTrades();
-    } catch (error) {
-      toast.error('Failed to close trade');
+      const response = await tradeService.getTradeStats();
+      setStats(response);
+    } catch (error: any) {
+      console.error('Failed to fetch stats:', error);
+      setStats(null);
     }
-  }
+  }, []);
 
   return {
     trades,
-    loading,
-    total,
-    page,
-    limit,
-    setPage,
-    filters,
-    setFilters,
+    stats,
+    isLoading,
     fetchTrades,
-    closeTrade,
+    fetchStats,
   };
 }

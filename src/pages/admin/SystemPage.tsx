@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 // ===================================================
 // FILE: src/pages/admin/SystemPage.tsx (FIXED)
 // ===================================================

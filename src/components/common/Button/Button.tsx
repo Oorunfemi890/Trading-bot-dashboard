@@ -1,16 +1,18 @@
 // ===================================================
-// FILE: src/components/common/Button/Button.tsx
+// FILE: src/components/common/Button/Button.tsx (FIXED)
 // ===================================================
 
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+import { ButtonHTMLAttributes, forwardRef, ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   fullWidth?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -20,6 +22,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     size = 'md', 
     loading, 
     fullWidth,
+    leftIcon,
+    rightIcon,
     className,
     disabled,
     ...props 
@@ -32,6 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
       ghost: 'hover:bg-accent hover:text-accent-foreground',
       destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+      danger: 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600',
     };
 
     const sizes = {
@@ -54,7 +59,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {!loading && leftIcon && <span className="mr-2">{leftIcon}</span>}
         {children}
+        {!loading && rightIcon && <span className="ml-2">{rightIcon}</span>}
       </button>
     );
   }
