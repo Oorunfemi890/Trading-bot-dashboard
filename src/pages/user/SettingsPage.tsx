@@ -1,5 +1,5 @@
 // ===================================================
-// FILE: src/pages/user/SettingsPage.tsx
+// FILE: src/pages/user/SettingsPage.tsx (FIXED)
 // ===================================================
 
 import { useState } from 'react';
@@ -7,7 +7,7 @@ import { Tabs } from '@/components/common/Tabs/Tabs';
 import { ProfileSettings } from '@/components/features/settings/ProfileSettings';
 import { RiskManagement } from '@/components/features/settings/RiskManagement';
 import { TradingSettings } from '@/components/features/settings/TradingSettings';
-import { NotificationSettings } from '@/components/features/settings/NotificationSettings';
+import NotificationSettings from '@/components/features/settings/NotificationSettings';
 import { TradingAccountForm } from '@/components/features/settings/TradingAccountForm';
 import { 
   User, 
@@ -23,30 +23,35 @@ export default function SettingsPage() {
   const tabs = [
     {
       id: 'profile',
+      value: 'profile',
       label: 'Profile',
       icon: <User className="h-4 w-4" />,
       content: <ProfileSettings />,
     },
     {
       id: 'risk',
+      value: 'risk',
       label: 'Risk Management',
       icon: <ShieldAlert className="h-4 w-4" />,
       content: <RiskManagement />,
     },
     {
       id: 'trading',
+      value: 'trading',
       label: 'Trading Preferences',
       icon: <Cog className="h-4 w-4" />,
       content: <TradingSettings />,
     },
     {
       id: 'account',
+      value: 'account',
       label: 'Trading Account',
       icon: <Wallet className="h-4 w-4" />,
       content: <TradingAccountForm />,
     },
     {
       id: 'notifications',
+      value: 'notifications',
       label: 'Notifications',
       icon: <Bell className="h-4 w-4" />,
       content: <NotificationSettings />,
