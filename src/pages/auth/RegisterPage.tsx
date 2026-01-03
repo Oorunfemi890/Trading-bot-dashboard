@@ -1,44 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // ===================================================
-// FILE: src/pages/auth/RegisterPage.tsx (COMPLETE FIX)
+// FILE: src/pages/auth/RegisterPage.tsx
 // ===================================================
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks';
 import { Button } from '@/components/common/Button/Button';
 import { Input } from '@/components/common/Input/Input';
-import { Select } from '@/components/common/Select/Select';
-
-const countryCodes = [
-  { value: '+234', label: '🇳🇬 Nigeria (+234)' },
-  { value: '+1', label: '🇺🇸 USA (+1)' },
-  { value: '+44', label: '🇬🇧 UK (+44)' },
-  { value: '+91', label: '🇮🇳 India (+91)' },
-  { value: '+86', label: '🇨🇳 China (+86)' },
-  { value: '+81', label: '🇯🇵 Japan (+81)' },
-  { value: '+49', label: '🇩🇪 Germany (+49)' },
-  { value: '+33', label: '🇫🇷 France (+33)' },
-  { value: '+39', label: '🇮🇹 Italy (+39)' },
-  { value: '+27', label: '🇿🇦 South Africa (+27)' },
-  { value: '+254', label: '🇰🇪 Kenya (+254)' },
-  { value: '+233', label: '🇬🇭 Ghana (+233)' },
-];
-
-const countries = [
-  { value: 'Nigeria', label: 'Nigeria' },
-  { value: 'USA', label: 'United States' },
-  { value: 'UK', label: 'United Kingdom' },
-  { value: 'India', label: 'India' },
-  { value: 'China', label: 'China' },
-  { value: 'Japan', label: 'Japan' },
-  { value: 'Germany', label: 'Germany' },
-  { value: 'France', label: 'France' },
-  { value: 'Italy', label: 'Italy' },
-  { value: 'South Africa', label: 'South Africa' },
-  { value: 'Kenya', label: 'Kenya' },
-  { value: 'Ghana', label: 'Ghana' },
-];
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -47,33 +21,58 @@ export default function RegisterPage() {
     password: '',
     fullName: '',
     invitationCode: '',
-    countryCode: '+234',
-    phoneNumber: '',
-    country: 'Nigeria',
+    phoneNumber: '', // full number including country code
+    country: '',     // automatically set from phone input
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+
+  // Real-time phone validation with auto-formatting
+  const handlePhoneChange = (
+    phone: string,
+    country: any,
+    e: any,
+    formattedValue: string
+  ) => {
+    setFormData({
+      ...formData,
+      phoneNumber: formattedValue, // formatted number like +234 801 234 5678
+      country: country.name,
+    });
+
+    // Validate as user types
+    const phoneNumber = parsePhoneNumberFromString(`+${phone}`);
+    if (phoneNumber && phoneNumber.isValid()) {
+      setPhoneError('');
+    } else {
+      setPhoneError('Invalid phone number');
+    }
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Combine country code and phone number
-      const fullPhoneNumber = formData.phoneNumber 
-        ? `${formData.countryCode}${formData.phoneNumber}`
-        : undefined;
+      // Final validation before submit
+      const phoneNumber = parsePhoneNumberFromString(formData.phoneNumber || '');
+      if (!phoneNumber || !phoneNumber.isValid()) {
+        setPhoneError('Please enter a valid phone number.');
+        setLoading(false);
+        return;
+      }
 
       await register({
         email: formData.email,
         password: formData.password,
         fullName: formData.fullName,
         invitationCode: formData.invitationCode,
-        phoneNumber: fullPhoneNumber,
+        phoneNumber: phoneNumber.formatInternational(), // final standardized format
         country: formData.country,
       });
     } catch (error) {
-      // Error handled by AuthContext with toast
+      // handled by AuthContext
     } finally {
       setLoading(false);
     }
@@ -84,12 +83,11 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-6 rounded-lg border bg-card p-6 md:p-8 shadow-lg">
         <div className="text-center">
           <h1 className="text-2xl md:text-3xl font-bold text-primary">Trading Bot</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Create your account
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Create your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Full Name */}
           <Input
             label="Full Name"
             placeholder="John Doe"
@@ -98,6 +96,7 @@ export default function RegisterPage() {
             required
           />
 
+          {/* Email */}
           <Input
             type="email"
             label="Email"
@@ -107,6 +106,7 @@ export default function RegisterPage() {
             required
           />
 
+          {/* Password */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Password <span className="text-destructive">*</span>
@@ -133,45 +133,50 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <Select
-              label="Code"
-              value={formData.countryCode}
-              onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
-              options={countryCodes}
-              className="col-span-1"
-            />
-            <Input
-              label="Phone Number"
-              type="tel"
-              placeholder="8012345678"
+          {/* Phone Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Phone Number <span className="text-destructive">*</span>
+            </label>
+            <PhoneInput
+              country={'ng'}
               value={formData.phoneNumber}
-              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value.replace(/\D/g, '') })}
-              className="col-span-2"
-              helperText="Optional"
+              enableSearch
+              placeholder="Enter phone number"
+              inputClass="w-full"
+              dropdownClass="z-50"
+              onChange={handlePhoneChange}
+              isValid={(value, country) => {
+                const phoneNumber = parsePhoneNumberFromString(`+${value}`);
+                return phoneNumber ? phoneNumber.isValid() : false;
+              }}
             />
+            {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
           </div>
 
-          <Select
-            label="Country"
-            value={formData.country}
-            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-            options={countries}
-          />
-
+          {/* Invitation Code */}
           <Input
             label="Invitation Code"
             placeholder="XXXX-XXXX-XXXX-XXXX"
             value={formData.invitationCode}
-            onChange={(e) => setFormData({ ...formData, invitationCode: e.target.value.toUpperCase() })}
+            onChange={(e) =>
+              setFormData({ ...formData, invitationCode: e.target.value.toUpperCase() })
+            }
             required
           />
 
-          <Button type="submit" fullWidth loading={loading}>
+          {/* Submit */}
+          <Button
+            type="submit"
+            fullWidth
+            loading={loading}
+            disabled={!!phoneError} // prevent submit if phone invalid
+          >
             Create Account
           </Button>
         </form>
 
+        {/* Sign in link */}
         <div className="text-center text-sm">
           <span className="text-muted-foreground">Already have an account? </span>
           <Link to="/login" className="text-primary hover:underline">
