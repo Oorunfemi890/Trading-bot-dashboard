@@ -10,7 +10,7 @@ import { Card } from '@/components/common/Card/Card';
 import { toast } from 'sonner';
 import { Bell, Mail, Smartphone, MessageSquare, TrendingUp, AlertTriangle, CheckCircle, DollarSign, Save } from 'lucide-react';
 
-export function NotificationSettings() {
+export default function NotificationSettings() {
   const [settings, setSettings] = useState({
     email: {
       tradeAlerts: true,

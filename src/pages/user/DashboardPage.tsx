@@ -2,26 +2,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/purity */
 // ===================================================
-// FILE: src/pages/user/DashboardPage.tsx
+// FILE: src/pages/user/DashboardPage.tsx (FIXED)
 // ===================================================
 
-import { useState, useEffect } from 'react';
-import { useAuth, useWebSocket, useTrades } from '@/hooks';
-import { StatsCard } from '@/components/features/dashboard/admin/StatsCard';
-import { PerformanceChart } from '@/components/features/dashboard/PerformanceChart';
-import { RecentTrades } from '@/components/features/dashboard/RecentTrades';
-import { ActiveTrades } from '@/components/features/dashboard/ActiveTrades';
-import { QuickActions } from '@/components/features/dashboard/QuickActions';
-import { Loader } from '@/components/common/Loader';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
+import { useState, useEffect } from "react";
+import { useAuth, useWebSocket, useTrades } from "@/hooks";
+import { StatsCard } from "@/components/features/dashboard/admin/StatsCard";
+import { PerformanceChart } from "@/components/features/dashboard/PerformanceChart";
+import { RecentTrades } from "@/components/features/dashboard/RecentTrades";
+import { ActiveTrades } from "@/components/features/dashboard/ActiveTrades";
+import { QuickActions } from "@/components/features/dashboard/QuickActions";
+import { Loader } from "@/components/common/Loader";
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
   Target,
   DollarSign,
   BarChart3,
-  AlertCircle
-} from 'lucide-react';
+  AlertCircle,
+} from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -37,19 +37,19 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    socket.on('trade:opened', (data) => {
-      console.log('New trade opened:', data);
+    socket.on("trade:opened", (data) => {
+      console.log("New trade opened:", data);
       fetchStats(); // Refresh stats
     });
 
-    socket.on('trade:completed', (data) => {
-      console.log('Trade completed:', data);
+    socket.on("trade:completed", (data) => {
+      console.log("Trade completed:", data);
       fetchStats();
     });
 
     return () => {
-      socket.off('trade:opened');
-      socket.off('trade:completed');
+      socket.off("trade:opened");
+      socket.off("trade:completed");
     };
   }, [socket, isConnected]);
 
@@ -60,6 +60,17 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  // Provide default values if stats is null
+  const safeStats = stats || {
+    netProfit: 0,
+    profitChange: 0,
+    winRate: 0,
+    winRateChange: 0,
+    activeTrades: 0,
+    todayTrades: 0,
+    todayChange: 0,
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -98,52 +109,53 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Profit"
-          value={`$${stats?.netProfit?.toFixed(2) || '0.00'}`}
-          change={stats?.profitChange || 0}
+          value={`$${safeStats.netProfit?.toFixed(2) || "0.00"}`}
+          change={safeStats.profitChange || 0}
           icon={DollarSign}
-          trend={stats?.netProfit >= 0 ? 'up' : 'down'}
+          trend={safeStats.netProfit >= 0 ? "up" : "down"}
         />
         <StatsCard
           title="Win Rate"
-          value={`${stats?.winRate?.toFixed(1) || '0'}%`}
-          change={stats?.winRateChange || 0}
+          value={`${safeStats.winRate?.toFixed(1) || "0"}%`}
+          change={safeStats.winRateChange || 0}
           icon={Target}
           trend="up"
         />
         <StatsCard
           title="Active Trades"
-          value={stats?.activeTrades || 0}
+          value={safeStats.activeTrades || 0}
           icon={Activity}
           trend="neutral"
         />
         <StatsCard
           title="Today's Trades"
-          value={stats?.todayTrades || 0}
-          change={stats?.todayChange || 0}
+          value={safeStats.todayTrades || 0}
+          change={safeStats.todayChange || 0}
           icon={BarChart3}
           trend="neutral"
         />
       </div>
 
       {/* Warning Banner if subscription expiring */}
-      {user?.subscriptionExpiresAt && 
-       new Date(user.subscriptionExpiresAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
-        <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-            <div>
-              <h3 className="font-semibold text-amber-900 dark:text-amber-100">
-                Subscription Expiring Soon
-              </h3>
-              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                Your subscription expires on{' '}
-                {new Date(user.subscriptionExpiresAt).toLocaleDateString()}.
-                Renew now to continue trading.
-              </p>
+      {user?.subscriptionExpiresAt &&
+        new Date(user.subscriptionExpiresAt) <
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-amber-900 dark:text-amber-100">
+                  Subscription Expiring Soon
+                </h3>
+                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                  Your subscription expires on{" "}
+                  {new Date(user.subscriptionExpiresAt).toLocaleDateString()}.
+                  Renew now to continue trading.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">

@@ -1,5 +1,5 @@
 // ===================================================
-// FILE: src/pages/user/TradesPage.tsx
+// FILE: src/pages/user/TradesPage.tsx (FIXED)
 // ===================================================
 
 import { useState, useEffect } from 'react';
@@ -8,7 +8,7 @@ import { TradeList } from '@/components/features/trades/TradeList';
 import { TradeFilters } from '@/components/features/trades/TradeFilters';
 import { TradeStats } from '@/components/features/trades/TradeStats';
 import { Button } from '@/components/common/Button/Button';
-import { Loader } from '@/components/common/Loader';
+import { Spinner } from '@/components/common/Spinner/Spinner';
 import { Filter, Download, RefreshCw } from 'lucide-react';
 
 export default function TradesPage() {
@@ -41,6 +41,11 @@ export default function TradesPage() {
 
   const handleExport = () => {
     // Export trades to CSV
+    if (!trades || trades.length === 0) {
+      alert('No trades to export');
+      return;
+    }
+
     const csv = trades.map(trade => ({
       ID: trade.id,
       Symbol: trade.symbol,
@@ -64,10 +69,30 @@ export default function TradesPage() {
     a.click();
   };
 
+  // Safe stats with default values
+  const safeStats = stats || {
+    total: 0,
+    open: 0,
+    closed: 0,
+    winning: 0,
+    losing: 0,
+    winRate: 0,
+    totalProfit: 0,
+    totalLoss: 0,
+    netProfit: 0,
+    profitFactor: 0,
+    averageTradeDuration: 0,
+    breakevenActivations: 0,
+    averageWin: 0,
+    averageLoss: 0,
+    largestWin: 0,
+    largestLoss: 0,
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             My Trades
@@ -96,6 +121,7 @@ export default function TradesPage() {
             variant="primary"
             onClick={handleExport}
             leftIcon={<Download className="h-4 w-4" />}
+            disabled={!trades || trades.length === 0}
           >
             Export
           </Button>
@@ -103,7 +129,7 @@ export default function TradesPage() {
       </div>
 
       {/* Stats Overview */}
-      <TradeStats stats={stats} />
+      <TradeStats stats={safeStats} />
 
       {/* Filters */}
       {showFilters && (
@@ -117,10 +143,13 @@ export default function TradesPage() {
       {/* Trades List */}
       {isLoading ? (
         <div className="flex h-96 items-center justify-center">
-          <Loader />
+          <div className="text-center">
+            <Spinner size="lg" />
+            <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">Loading trades...</p>
+          </div>
         </div>
       ) : (
-        <TradeList trades={trades} onRefresh={handleRefresh} />
+        <TradeList trades={trades || []} onRefresh={handleRefresh} />
       )}
     </div>
   );
