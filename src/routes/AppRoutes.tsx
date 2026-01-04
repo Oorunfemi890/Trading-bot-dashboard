@@ -9,6 +9,8 @@ import { Construction } from 'lucide-react';
 // Auth Pages
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
+import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
+
 
 // Layout
 import { AppLayout } from '@/components/layout/AppLayout/AppLayout';
@@ -17,6 +19,8 @@ import { AppLayout } from '@/components/layout/AppLayout/AppLayout';
 import DashboardPage from '@/pages/user/DashboardPage';
 import TradesPage from '@/pages/user/TradesPage';
 import SettingsPage from '@/pages/user/SettingsPage';
+import UserChannelsPage from '@/pages/user/ChannelsPage';
+import SignalsPage from '@/pages/user/SignalsPage';
 
 // Admin Pages - ALL IMPORTED NOW
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
@@ -24,7 +28,7 @@ import InvitationsPage from '@/pages/admin/InvitationsPage';
 import UsersPage from '@/pages/admin/UsersPage';
 import UserDetailsPage from '@/pages/admin/UserDetailsPage';
 import AnalyticsPage from '@/pages/admin/AnalyticsPage';
-import ChannelsPage from '@/pages/admin/ChannelsPage';
+import AdminChannelsPage from '@/pages/admin/ChannelsPage';
 import SystemPage from '@/pages/admin/SystemPage';
 import AdminProfilePage from '@/pages/admin/ProfilePage';
 import AdminSettingsPage from '@/pages/admin/SettingsPage';
@@ -101,6 +105,8 @@ export function AppRoutes() {
       {/* Public Routes */}
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+
 
       {/* User Routes */}
       <Route
@@ -114,8 +120,8 @@ export function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="trades" element={<TradesPage />} />
-        <Route path="signals" element={<ComingSoonPage title="Signals" description="Track and manage trading signals from your subscribed channels" />} />
-        <Route path="channels" element={<ComingSoonPage title="Channels" description="Browse and subscribe to Telegram signal channels" />} />
+        <Route path="signals" element={<SignalsPage />} />
+        <Route path="channels" element={<UserChannelsPage />} />
         <Route path="performance" element={<ComingSoonPage title="Performance Analytics" description="View detailed performance metrics and reports" />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="profile" element={<ComingSoonPage title="Profile" description="View and edit your profile information" />} />
@@ -137,7 +143,7 @@ export function AppRoutes() {
         <Route path="users" element={<UsersPage />} />
         <Route path="users/:id" element={<UserDetailsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
-        <Route path="channels" element={<ChannelsPage />} />
+        <Route path="channels" element={<AdminChannelsPage />} />
         <Route path="system" element={<SystemPage />} />
         <Route path="profile" element={<AdminProfilePage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
