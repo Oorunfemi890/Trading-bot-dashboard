@@ -1,7 +1,6 @@
 // ===================================================
-// MOBILE-RESPONSIVE SIDEBAR
+// FILE: src/components/layout/Sidebar/Sidebar.tsx (UPDATED - NO MENU BUTTON)
 // ===================================================
-import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -14,17 +13,19 @@ import {
   Database,
   User,
   LogOut,
-  Radio,
-  Menu,
-  X
+  Radio
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useAuth } from '@/hooks';
 import { Button } from '@/components/common/Button/Button';
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
   const adminNavItems = [
@@ -45,21 +46,17 @@ export function Sidebar() {
 
   const navItems = isAdmin ? adminNavItems : userNavItems;
 
+  const handleNavClick = () => {
+    if (onClose) onClose();
+  };
+
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="fixed left-4 top-4 z-50 lg:hidden rounded-md bg-card p-2 border shadow-lg"
-      >
-        {isMobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </button>
-
       {/* Mobile Overlay */}
-      {isMobileOpen && (
+      {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={onClose}
         />
       )}
 
@@ -68,7 +65,7 @@ export function Sidebar() {
         className={cn(
           "fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card flex flex-col transition-transform duration-300",
           "lg:translate-x-0",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+          isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Logo */}
@@ -82,7 +79,7 @@ export function Sidebar() {
             <NavLink
               key={item.href}
               to={item.href}
-              onClick={() => setIsMobileOpen(false)}
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
@@ -102,7 +99,7 @@ export function Sidebar() {
         <div className="border-t p-4 space-y-1">
           <NavLink
             to={isAdmin ? '/admin/profile' : '/profile'}
-            onClick={() => setIsMobileOpen(false)}
+            onClick={handleNavClick}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
@@ -118,7 +115,7 @@ export function Sidebar() {
 
           <NavLink
             to={isAdmin ? '/admin/settings' : '/settings'}
-            onClick={() => setIsMobileOpen(false)}
+            onClick={handleNavClick}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
@@ -135,7 +132,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             onClick={() => {
-              setIsMobileOpen(false);
+              handleNavClick();
               logout();
             }}
             className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"

@@ -1,5 +1,5 @@
 // ===================================================
-// FILE: src/components/layout/AppLayout/AppLayout.tsx (FIXED)
+// FILE: src/components/layout/AppLayout/AppLayout.tsx (UPDATED)
 // ===================================================
 
 import { useState } from 'react';
@@ -12,7 +12,10 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
+      <Sidebar 
+        isOpen={isMobileMenuOpen} 
+        onClose={() => setIsMobileMenuOpen(false)} 
+      />
       <Header onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
       
       {/* Main Content */}
