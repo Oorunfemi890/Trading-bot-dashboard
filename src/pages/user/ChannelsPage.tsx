@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // ===================================================
-// FILE: src/pages/user/UserChannelsPage.tsx - PRODUCTION READY
+// FILE: src/pages/user/ChannelsPage.tsx - FIXED SUBMISSION
 // ===================================================
 
 import { useState, useEffect } from 'react';
@@ -59,9 +59,21 @@ export default function UserChannelsPage() {
       fetchChannels();
     });
 
+    // ✅ LISTEN FOR APPROVAL/REJECTION
+    socket.on('channel:request:approved', (data: any) => {
+      toast.success(`Your request for "${data.channelTitle}" was approved! 🎉`);
+      fetchChannels(); // Refresh to show new channel
+    });
+
+    socket.on('channel:request:rejected', (data: any) => {
+      toast.error(`Your request for "${data.channelTitle}" was rejected. Reason: ${data.rejectionReason || 'N/A'}`);
+    });
+
     return () => {
       socket.off('channel:added');
       socket.off('channel:updated');
+      socket.off('channel:request:approved');
+      socket.off('channel:request:rejected');
     };
   }, [socket, isConnected]);
 
@@ -87,25 +99,63 @@ export default function UserChannelsPage() {
     }
   };
 
-  // Submit channel request
+  // ✅ FIXED: Submit channel request
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validation
+    if (!requestForm.channelId.trim()) {
+      toast.error('Channel ID is required');
+      return;
+    }
+
+    if (!requestForm.channelTitle.trim()) {
+      toast.error('Channel title is required');
+      return;
+    }
+
+    if (!requestForm.reason.trim()) {
+      toast.error('Please provide a reason for this request');
+      return;
+    }
+
     setSubmittingRequest(true);
 
     try {
-      // API call would go here
-      // await channelRequestService.submitRequest(requestForm);
-      toast.success('Channel request submitted successfully');
-      setShowRequestModal(false);
-      setRequestForm({
-        channelId: '',
-        channelUsername: '',
-        channelTitle: '',
-        channelDescription: '',
-        reason: '',
+      // ✅ CORRECTED API CALL
+      const response = await fetch('/api/v1/channel-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({
+          channelId: requestForm.channelId.trim(),
+          channelUsername: requestForm.channelUsername.trim() || undefined,
+          channelTitle: requestForm.channelTitle.trim(),
+          channelDescription: requestForm.channelDescription.trim() || undefined,
+          reason: requestForm.reason.trim(),
+        }),
       });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Channel request submitted successfully! Admins will review it.');
+        setShowRequestModal(false);
+        setRequestForm({
+          channelId: '',
+          channelUsername: '',
+          channelTitle: '',
+          channelDescription: '',
+          reason: '',
+        });
+      } else {
+        toast.error(data.message || 'Failed to submit request');
+      }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to submit request');
+      console.error('Request submission error:', error);
+      toast.error('Network error. Please try again.');
     } finally {
       setSubmittingRequest(false);
     }

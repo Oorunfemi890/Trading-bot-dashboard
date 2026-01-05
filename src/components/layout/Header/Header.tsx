@@ -1,11 +1,11 @@
 /* eslint-disable react-hooks/immutability */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // ===================================================
-// FILE: src/components/layout/Header/Header.tsx (COMPLETE REWRITE)
+// FILE: src/components/layout/Header/Header.tsx (COMPLETE FIX)
 // ===================================================
 
 import { useState, useEffect } from 'react';
-import { Bell, Moon, Sun, LogOut, User, Settings, Menu, X, Radio, Check, X as XIcon, ChevronDown } from 'lucide-react';
+import { Bell, Moon, Sun, LogOut, User, Settings, Menu, Radio, Check, X as XIcon, ChevronDown, Clock } from 'lucide-react';
 import { Button } from '@/components/common/Button/Button';
 import { Badge } from '@/components/common/Badge/Badge';
 import { useAuth, useTheme } from '@/hooks';
@@ -20,13 +20,19 @@ interface ChannelRequest {
   channelTitle: string;
   channelUsername?: string;
   channelDescription?: string;
+  channelId: string;
   reason: string;
   user: {
     fullName: string;
     email: string;
   };
   createdAt: string;
-  status: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedAt?: string;
+  reviewedBy?: {
+    fullName: string;
+  };
+  rejectionReason?: string;
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
@@ -36,19 +42,20 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<ChannelRequest[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
-  // Fetch notifications on mount and poll every 30 seconds
+  // ✅ Fetch ALL notifications on mount
   useEffect(() => {
     if (isAdmin) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000);
+      const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
       return () => clearInterval(interval);
     }
   }, [isAdmin]);
 
-  // WebSocket connection for real-time updates
+  // ✅ WebSocket connection for real-time updates
   useEffect(() => {
     if (!isAdmin) return;
 
@@ -56,28 +63,35 @@ export function Header({ onMenuClick }: HeaderProps) {
     if (!token) return;
 
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/socket.io`;
+    const wsHost = window.location.host;
+    const wsUrl = `${wsProtocol}//${wsHost}`;
 
     try {
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         console.log('✅ WebSocket connected');
-        // Send authentication
         ws.send(JSON.stringify({ type: 'auth', token }));
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log('📡 WebSocket message:', data);
           
-          if (data.type === 'channel_request_submitted') {
-            fetchNotifications();
-            toast.info(`New channel request: ${data.request?.channelTitle || 'Unknown'}`);
+          // ✅ NEW REQUEST
+          if (data.type === 'channel_request_submitted' || data.event === 'channel:request:new') {
+            console.log('🔔 New channel request received!');
+            fetchNotifications(); // Refresh list
+            toast.info(`New channel request: ${data.request?.channelTitle || 'Unknown'}`, {
+              duration: 5000,
+            });
           }
 
-          if (data.type === 'channel_request_processed') {
-            fetchNotifications();
+          // ✅ REQUEST PROCESSED
+          if (data.type === 'channel_request_processed' || data.event === 'channel:request:processed') {
+            console.log('✅ Channel request processed');
+            fetchNotifications(); // Refresh list
           }
         } catch (error) {
           console.error('WebSocket message parse error:', error);
@@ -85,7 +99,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket error:', error);
       };
 
       ws.onclose = () => {
@@ -96,28 +110,55 @@ export function Header({ onMenuClick }: HeaderProps) {
         ws.close();
       };
     } catch (error) {
-      console.error('WebSocket connection error:', error);
+      console.error('❌ WebSocket connection error:', error);
     }
   }, [isAdmin]);
 
+  // ✅ Fetch ALL notifications (not just pending)
   async function fetchNotifications() {
     try {
-      const response = await fetch('/api/v1/channel-requests/admin/all?status=pending', {
+      console.log('🔔 Fetching all notifications...');
+      
+      // Fetch ALL requests
+      const response = await fetch('/api/v1/channel-requests/admin/all', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
       });
+
+      console.log('📡 Response status:', response.status);
+      
+      if (!response.ok) {
+        console.error('❌ API response not OK:', response.statusText);
+        return;
+      }
+
       const data = await response.json();
+      console.log('📦 Response data:', data);
+      
       if (data.success) {
-        setNotifications(data.data);
-        setPendingCount(data.data.length);
+        const allRequests = data.data || [];
+        setNotifications(allRequests);
+        
+        // Count only pending
+        const pending = allRequests.filter((req: ChannelRequest) => req.status === 'pending');
+        setPendingCount(pending.length);
+        
+        console.log(`✅ Loaded ${allRequests.length} total requests, ${pending.length} pending`);
+      } else {
+        console.error('❌ API returned error:', data.message);
       }
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      console.error('❌ Failed to fetch notifications:', error);
     }
   }
 
-  async function handleApprove(requestId: string) {
+  // ✅ Approve request directly from notification
+  async function handleApprove(requestId: string, channelTitle: string) {
+    if (processingId) return; // Prevent double-click
+    
+    setProcessingId(requestId);
+    
     try {
       const response = await fetch(`/api/v1/channel-requests/admin/${requestId}/approve`, {
         method: 'POST',
@@ -127,16 +168,28 @@ export function Header({ onMenuClick }: HeaderProps) {
       });
       
       if (response.ok) {
-        toast.success('Channel approved successfully!');
-        fetchNotifications();
+        toast.success(`✅ Channel "${channelTitle}" approved successfully!`);
+        await fetchNotifications(); // Refresh list
+      } else {
+        const data = await response.json();
+        toast.error(data.message || 'Failed to approve channel');
       }
     } catch (error) {
-      toast.error('Failed to approve channel');
+      toast.error('Network error. Please try again.');
+      console.error('Approval error:', error);
+    } finally {
+      setProcessingId(null);
     }
   }
 
-  async function handleReject(requestId: string) {
-    const reason = prompt('Rejection reason (optional):');
+  // ✅ Reject request directly from notification
+  async function handleReject(requestId: string, channelTitle: string) {
+    if (processingId) return;
+    
+    const reason = prompt(`Reject "${channelTitle}"?\n\nRejection reason (optional):`);
+    if (reason === null) return; // User cancelled
+    
+    setProcessingId(requestId);
     
     try {
       const response = await fetch(`/api/v1/channel-requests/admin/${requestId}/reject`, {
@@ -145,15 +198,21 @@ export function Header({ onMenuClick }: HeaderProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
-        body: JSON.stringify({ rejectionReason: reason || 'Not approved' })
+        body: JSON.stringify({ rejectionReason: reason || 'Not approved by admin' })
       });
       
       if (response.ok) {
-        toast.success('Channel rejected');
-        fetchNotifications();
+        toast.success(`❌ Channel "${channelTitle}" rejected`);
+        await fetchNotifications(); // Refresh list
+      } else {
+        const data = await response.json();
+        toast.error(data.message || 'Failed to reject channel');
       }
     } catch (error) {
-      toast.error('Failed to reject channel');
+      toast.error('Network error. Please try again.');
+      console.error('Rejection error:', error);
+    } finally {
+      setProcessingId(null);
     }
   }
 
@@ -167,10 +226,24 @@ export function Header({ onMenuClick }: HeaderProps) {
       .slice(0, 2);
   };
 
+  // ✅ Get status badge
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="warning" size="sm">Pending</Badge>;
+      case 'approved':
+        return <Badge variant="success" size="sm">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive" size="sm">Rejected</Badge>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <header className="fixed left-0 right-0 top-0 z-40 h-16 border-b bg-card lg:left-64">
       <div className="flex h-full items-center justify-between px-4 md:px-6">
-        {/* Left side - Single Menu button */}
+        {/* Left side - Menu button */}
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -181,7 +254,6 @@ export function Header({ onMenuClick }: HeaderProps) {
             <Menu className="h-5 w-5" />
           </Button>
 
-          {/* Logo - visible on mobile */}
           <h1 className="lg:hidden text-lg font-bold text-primary">Trading Bot</h1>
         </div>
 
@@ -219,70 +291,131 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
                   
-                  <div className="absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] max-h-[500px] overflow-y-auto rounded-lg border bg-card shadow-xl z-50">
+                  <div className="absolute right-0 top-full mt-2 w-[420px] max-w-[calc(100vw-2rem)] max-h-[600px] overflow-y-auto rounded-lg border bg-card shadow-xl z-50">
+                    {/* Header */}
                     <div className="sticky top-0 bg-card border-b p-4 z-10">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold">Channel Requests</h3>
-                        {pendingCount > 0 && (
-                          <Badge variant="destructive">
-                            {pendingCount} pending
+                        <h3 className="font-semibold text-lg">Channel Requests</h3>
+                        <div className="flex items-center gap-2">
+                          {pendingCount > 0 && (
+                            <Badge variant="warning">
+                              {pendingCount} pending
+                            </Badge>
+                          )}
+                          <Badge variant="default">
+                            {notifications.length} total
                           </Badge>
-                        )}
+                        </div>
                       </div>
                     </div>
 
+                    {/* Notifications List */}
                     <div className="p-2">
                       {notifications.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground">
                           <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p>No pending requests</p>
+                          <p>No channel requests</p>
                         </div>
                       ) : (
                         notifications.map((request) => (
-                          <div key={request.id} className="p-3 mb-2 rounded-lg border bg-card hover:bg-accent transition-colors">
+                          <div 
+                            key={request.id} 
+                            className={`p-4 mb-2 rounded-lg border transition-colors ${
+                              request.status === 'pending' 
+                                ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800' 
+                                : 'bg-card hover:bg-accent'
+                            }`}
+                          >
                             <div className="flex items-start gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
-                                <Radio className="h-5 w-5 text-primary" />
+                              <div className={`flex h-10 w-10 items-center justify-center rounded-full flex-shrink-0 ${
+                                request.status === 'pending' 
+                                  ? 'bg-amber-100 dark:bg-amber-900/30' 
+                                  : request.status === 'approved'
+                                  ? 'bg-green-100 dark:bg-green-900/30'
+                                  : 'bg-red-100 dark:bg-red-900/30'
+                              }`}>
+                                <Radio className={`h-5 w-5 ${
+                                  request.status === 'pending'
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : request.status === 'approved'
+                                    ? 'text-green-600 dark:text-green-400'
+                                    : 'text-red-600 dark:text-red-400'
+                                }`} />
                               </div>
                               
                               <div className="flex-1 min-w-0">
-                                <div className="font-semibold truncate">
-                                  {request.channelTitle}
+                                {/* Title & Status */}
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                  <div className="font-semibold truncate">
+                                    {request.channelTitle}
+                                  </div>
+                                  {getStatusBadge(request.status)}
                                 </div>
+
+                                {/* Username */}
                                 {request.channelUsername && (
                                   <div className="text-xs text-muted-foreground">
                                     @{request.channelUsername}
                                   </div>
                                 )}
-                                <div className="text-sm text-muted-foreground mt-1">
-                                  By: {request.user?.fullName || 'Unknown'}
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                  {request.reason}
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {new Date(request.createdAt).toLocaleDateString()}
+
+                                {/* Channel ID */}
+                                <div className="text-xs text-muted-foreground font-mono">
+                                  ID: {request.channelId}
                                 </div>
 
-                                <div className="flex gap-2 mt-3">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleApprove(request.id)}
-                                    className="flex-1"
-                                  >
-                                    <Check className="h-3 w-3 mr-1" />
-                                    Approve
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => handleReject(request.id)}
-                                    className="flex-1"
-                                  >
-                                    <XIcon className="h-3 w-3 mr-1" />
-                                    Reject
-                                  </Button>
+                                {/* User Info */}
+                                <div className="text-sm text-muted-foreground mt-2">
+                                  Requested by: <span className="font-medium">{request.user?.fullName || 'Unknown'}</span>
                                 </div>
+
+                                {/* Reason */}
+                                <div className="text-xs text-muted-foreground mt-1 line-clamp-2 bg-muted/50 p-2 rounded">
+                                  <strong>Reason:</strong> {request.reason}
+                                </div>
+
+                                {/* Timestamp */}
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
+                                  <Clock className="h-3 w-3" />
+                                  {new Date(request.createdAt).toLocaleString()}
+                                </div>
+
+                                {/* Reviewed Info (if not pending) */}
+                                {request.status !== 'pending' && request.reviewedAt && (
+                                  <div className="text-xs text-muted-foreground mt-1 italic">
+                                    {request.status === 'approved' ? 'Approved' : 'Rejected'} by {request.reviewedBy?.fullName || 'Admin'} on {new Date(request.reviewedAt).toLocaleString()}
+                                    {request.rejectionReason && (
+                                      <div className="mt-1 text-destructive">
+                                        <strong>Reason:</strong> {request.rejectionReason}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Action Buttons (only for pending) */}
+                                {request.status === 'pending' && (
+                                  <div className="flex gap-2 mt-3">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleApprove(request.id, request.channelTitle)}
+                                      disabled={processingId === request.id}
+                                      className="flex-1"
+                                    >
+                                      <Check className="h-3 w-3 mr-1" />
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => handleReject(request.id, request.channelTitle)}
+                                      disabled={processingId === request.id}
+                                      className="flex-1"
+                                    >
+                                      <XIcon className="h-3 w-3 mr-1" />
+                                      Reject
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -290,6 +423,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                       )}
                     </div>
 
+                    {/* Footer */}
                     {notifications.length > 0 && (
                       <div className="border-t p-3">
                         <Button
@@ -301,7 +435,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                           }}
                           fullWidth
                         >
-                          View All Requests
+                          View All in Channels Page
                         </Button>
                       </div>
                     )}
