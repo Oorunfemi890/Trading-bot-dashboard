@@ -1,29 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ===================================================
-// FILE: src/components/features/dashboard/ActiveTrades.tsx
+// FILE: src/components/features/dashboard/ActiveTrades.tsx (FIXED)
 // ===================================================
 
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/common/Card/Card';
 import { Badge } from '@/components/common/Badge/Badge';
-import { Button } from '@/components/common/Button/Button';
 import { EmptyState } from '@/components/common/EmptyState/EmptyState';
 import { Activity, TrendingUp, TrendingDown, Shield, ExternalLink } from 'lucide-react';
-// import { Link } from 'react-router-dom';
-
-interface ActiveTrade {
-  id: string;
-  symbol: string;
-  direction: 'buy' | 'sell';
-  positionsFilled: number;
-  totalPositions: number;
-  grossProfit: number;
-  breakevenActivated: boolean;
-  openedAt: string;
-}
+import { tradeService } from '@/services/api';
+import { formatRelativeTime, formatCurrency } from '@/utils';
 
 export function ActiveTrades() {
-  const [trades, setTrades] = useState<ActiveTrade[]>([]);
+  const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,47 +21,14 @@ export function ActiveTrades() {
 
   const fetchActiveTrades = async () => {
     try {
-      // API call
-      // Mock data
-      const mockTrades: ActiveTrade[] = [
-        {
-          id: '1',
-          symbol: 'XAUUSD',
-          direction: 'buy',
-          positionsFilled: 3,
-          totalPositions: 5,
-          grossProfit: 245.50,
-          breakevenActivated: true,
-          openedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: '2',
-          symbol: 'EURUSD',
-          direction: 'sell',
-          positionsFilled: 5,
-          totalPositions: 5,
-          grossProfit: -32.10,
-          breakevenActivated: false,
-          openedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        },
-      ];
-      setTrades(mockTrades);
+      const data = await tradeService.getActiveTrades();
+      setTrades(data);
     } catch (error) {
       console.error('Failed to fetch active trades:', error);
+      setTrades([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatTimeAgo = (date: string) => {
-    const now = new Date();
-    const then = new Date(date);
-    const diff = now.getTime() - then.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (hours > 0) return `${hours}h ${minutes}m ago`;
-    return `${minutes}m ago`;
   };
 
   return (
@@ -87,13 +43,15 @@ export function ActiveTrades() {
             </h3>
             <Badge variant="blue">{trades.length}</Badge>
           </div>
-          <button
-            onClick={() => window.location.href = '/trades?filter=active'}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-          >
-            View All
-            <ExternalLink className="h-3 w-3" />
-          </button>
+          {trades.length > 0 && (
+            <button
+              onClick={() => window.location.href = '/trades?filter=active'}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+            >
+              View All
+              <ExternalLink className="h-3 w-3" />
+            </button>
+          )}
         </div>
 
         {/* Trades List */}
@@ -146,7 +104,7 @@ export function ActiveTrades() {
                         ? 'text-green-600 dark:text-green-400'
                         : 'text-red-600 dark:text-red-400'
                     }`}>
-                      {trade.grossProfit >= 0 ? '+' : ''}${trade.grossProfit.toFixed(2)}
+                      {trade.grossProfit >= 0 ? '+' : ''}{formatCurrency(trade.grossProfit)}
                     </div>
                   </div>
                 </div>
@@ -164,7 +122,7 @@ export function ActiveTrades() {
                     )}
                   </div>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatTimeAgo(trade.openedAt)}
+                    {formatRelativeTime(trade.openedAt)}
                   </span>
                 </div>
               </div>

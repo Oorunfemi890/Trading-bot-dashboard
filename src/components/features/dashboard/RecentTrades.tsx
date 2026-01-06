@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ===================================================
-// FILE: src/components/features/dashboard/RecentTrades.tsx
+// FILE: src/components/features/dashboard/RecentTrades.tsx (FIXED)
 // ===================================================
 
 import { useState, useEffect } from 'react';
@@ -7,18 +8,11 @@ import { Card } from '@/components/common/Card/Card';
 import { Badge } from '@/components/common/Badge/Badge';
 import { EmptyState } from '@/components/common/EmptyState/EmptyState';
 import { History, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/utils/format.util';
-
-interface RecentTrade {
-  id: string;
-  symbol: string;
-  direction: 'buy' | 'sell';
-  netProfit: number;
-  closedAt: string;
-}
+import { tradeService } from '@/services/api';
+import { formatCurrency, formatDate } from '@/utils';
 
 export function RecentTrades() {
-  const [trades, setTrades] = useState<RecentTrade[]>([]);
+  const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,48 +21,11 @@ export function RecentTrades() {
 
   const fetchRecentTrades = async () => {
     try {
-      // API call
-      // Mock data
-      const mockTrades: RecentTrade[] = [
-        {
-          id: '1',
-          symbol: 'XAUUSD',
-          direction: 'buy',
-          netProfit: 342.50,
-          closedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: '2',
-          symbol: 'EURUSD',
-          direction: 'sell',
-          netProfit: -85.20,
-          closedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: '3',
-          symbol: 'GBPUSD',
-          direction: 'buy',
-          netProfit: 156.80,
-          closedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: '4',
-          symbol: 'BTCUSD',
-          direction: 'buy',
-          netProfit: 520.00,
-          closedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: '5',
-          symbol: 'USDJPY',
-          direction: 'sell',
-          netProfit: -42.30,
-          closedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        },
-      ];
-      setTrades(mockTrades);
+      const data = await tradeService.getRecentTrades(5);
+      setTrades(data);
     } catch (error) {
       console.error('Failed to fetch recent trades:', error);
+      setTrades([]);
     } finally {
       setLoading(false);
     }
@@ -85,13 +42,15 @@ export function RecentTrades() {
               Recent Trades
             </h3>
           </div>
-          <button
-            onClick={() => window.location.href = '/trades'}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-          >
-            View All
-            <ExternalLink className="h-3 w-3" />
-          </button>
+          {trades.length > 0 && (
+            <button
+              onClick={() => window.location.href = '/trades'}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+            >
+              View All
+              <ExternalLink className="h-3 w-3" />
+            </button>
+          )}
         </div>
 
         {/* Trades List */}

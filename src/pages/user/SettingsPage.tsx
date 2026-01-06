@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
 import { Tabs } from '@/components/common/Tabs/Tabs';
 import { Button } from '@/components/common/Button/Button';
