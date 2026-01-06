@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // ===================================================
-// FILE: src/components/layout/Sidebar/Sidebar.tsx (UPDATED - NO MENU BUTTON)
+// FILE: src/components/layout/Sidebar/Sidebar.tsx
+// UPDATE: Sidebar controls its own toggle state for responsive behavior
 // ===================================================
+
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -13,7 +17,8 @@ import {
   Database,
   User,
   LogOut,
-  Radio
+  Radio,
+  X // ✅ ADDED for close button
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useAuth } from '@/hooks';
@@ -68,9 +73,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center border-b px-6">
+        {/* Logo & Close Button */}
+        <div className="flex h-16 items-center justify-between border-b px-6">
           <h1 className="text-xl font-bold text-primary">Trading Bot</h1>
+          
+          {/* ✅ CLOSE BUTTON (Mobile only) */}
+          {isOpen && (
+            <button
+              onClick={onClose}
+              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {/* Navigation */}
