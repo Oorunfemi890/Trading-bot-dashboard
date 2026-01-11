@@ -1,5 +1,5 @@
 // ===================================================
-// FILE: src/routes/AppRoutes.tsx (FIXED - ALL ADMIN PAGES)
+// FILE: src/routes/AppRoutes.tsx (COMPLETE UPDATE)
 // ===================================================
 
 import { Routes, Route, Navigate } from 'react-router-dom';
@@ -11,18 +11,21 @@ import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
 
-
 // Layout
 import { AppLayout } from '@/components/layout/AppLayout/AppLayout';
 
-// User Pages
+// User Pages - ALL IMPORTED
 import DashboardPage from '@/pages/user/DashboardPage';
 import TradesPage from '@/pages/user/TradesPage';
-import SettingsPage from '@/pages/user/SettingsPage';
-import UserChannelsPage from '@/pages/user/ChannelsPage';
 import SignalsPage from '@/pages/user/SignalsPage';
+import UserChannelsPage from '@/pages/user/ChannelsPage';
+import PerformancePage from '@/pages/user/PerformancePage';
+import EASetupPage from '@/pages/user/EASetupPage';
+import ProfilePage from '@/pages/user/ProfilePage';
+import SettingsPage from '@/pages/user/SettingsPage';
+import HelpPage from '@/pages/user/HelpPage';
 
-// Admin Pages - ALL IMPORTED NOW
+// Admin Pages
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import InvitationsPage from '@/pages/admin/InvitationsPage';
 import UsersPage from '@/pages/admin/UsersPage';
@@ -91,7 +94,6 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (isAuthenticated) {
-    // Redirect based on role
     const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
     return <Navigate to={isAdmin ? '/admin/dashboard' : '/dashboard'} replace />;
   }
@@ -107,8 +109,7 @@ export function AppRoutes() {
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
 
-
-      {/* User Routes */}
+      {/* User Routes - ALL PAGES */}
       <Route
         path="/"
         element={
@@ -122,13 +123,14 @@ export function AppRoutes() {
         <Route path="trades" element={<TradesPage />} />
         <Route path="signals" element={<SignalsPage />} />
         <Route path="channels" element={<UserChannelsPage />} />
-        <Route path="performance" element={<ComingSoonPage title="Performance Analytics" description="View detailed performance metrics and reports" />} />
+        <Route path="performance" element={<PerformancePage />} />
+        <Route path="ea-setup" element={<EASetupPage />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
-        <Route path="profile" element={<ComingSoonPage title="Profile" description="View and edit your profile information" />} />
-        <Route path="help" element={<ComingSoonPage title="Help & Support" description="Get help and support for using the platform" />} />
+        <Route path="help" element={<HelpPage />} />
       </Route>
 
-      {/* Admin Routes - NOW WITH REAL COMPONENTS */}
+      {/* Admin Routes */}
       <Route
         path="/admin"
         element={

@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // ===================================================
-// FILE: src/components/layout/Sidebar/Sidebar.tsx
-// UPDATE: Sidebar controls its own toggle state for responsive behavior
+// FILE: src/components/layout/Sidebar/Sidebar.tsx (COMPLETE UPDATE)
 // ===================================================
 
 import { useState } from 'react';
@@ -18,7 +16,10 @@ import {
   User,
   LogOut,
   Radio,
-  X // ✅ ADDED for close button
+  X,
+  Monitor,
+  Target,
+  HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useAuth } from '@/hooks';
@@ -47,6 +48,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { label: 'Trades', href: '/trades', icon: <TrendingUp className="h-5 w-5" /> },
     { label: 'Signals', href: '/signals', icon: <Database className="h-5 w-5" /> },
     { label: 'Channels', href: '/channels', icon: <Radio className="h-5 w-5" /> },
+    { label: 'Performance', href: '/performance', icon: <Target className="h-5 w-5" /> },
+    { label: 'EA Setup', href: '/ea-setup', icon: <Monitor className="h-5 w-5" /> },
+    { label: 'Help', href: '/help', icon: <HelpCircle className="h-5 w-5" /> },
   ];
 
   const navItems = isAdmin ? adminNavItems : userNavItems;
@@ -77,7 +81,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex h-16 items-center justify-between border-b px-6">
           <h1 className="text-xl font-bold text-primary">Trading Bot</h1>
           
-          {/* ✅ CLOSE BUTTON (Mobile only) */}
+          {/* Close Button (Mobile only) */}
           {isOpen && (
             <button
               onClick={onClose}
