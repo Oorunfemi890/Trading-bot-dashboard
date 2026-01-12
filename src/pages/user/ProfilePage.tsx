@@ -9,7 +9,7 @@ import { Button } from '@/components/common/Button/Button';
 import { Input } from '@/components/common/Input/Input';
 import { Badge } from '@/components/common/Badge/Badge';
 import { Spinner } from '@/components/common/Spinner/Spinner';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext';
 import { 
   User, Mail, Phone, MapPin, Calendar, Shield, 
   Award, Save, Lock, CheckCircle 

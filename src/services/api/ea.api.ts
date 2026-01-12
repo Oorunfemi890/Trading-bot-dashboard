@@ -1,9 +1,10 @@
-// FILE: src/api/ea.api.ts
+// FILE: src/services/api/ea.api.ts
 // =============================================
-// EA API Client
+// EA API Client - FIXED
 // =============================================
 
-import { apiClient } from './client';
+import axios from '@/lib/axios';
+import type { ApiResponse } from '@/types';
 
 export interface GenerateTokenResponse {
   success: boolean;
@@ -17,17 +18,19 @@ export interface GenerateTokenResponse {
   };
 }
 
+export interface EAToken {
+  id: string;
+  deviceName: string;
+  platform: string | null;
+  status: 'active' | 'revoked' | 'expired';
+  lastUsedAt: Date | null;
+  createdAt: Date;
+  requestCount: number;
+}
+
 export interface TokensResponse {
   success: boolean;
-  data?: Array<{
-    id: string;
-    deviceName: string;
-    platform: string | null;
-    status: 'active' | 'revoked' | 'expired';
-    lastUsedAt: Date | null;
-    createdAt: Date;
-    requestCount: number;
-  }>;
+  data?: EAToken[];
 }
 
 export interface StatusResponse {
@@ -54,34 +57,47 @@ export const eaAPI = {
     deviceName: string, 
     platform: 'MT4' | 'MT5' = 'MT5'
   ): Promise<GenerateTokenResponse> {
-    const response = await apiClient.post('/ea/generate-token', {
-      deviceName,
-      platform,
-    });
-    return response.data;
+    const response = await axios.post<ApiResponse<GenerateTokenResponse['data']>>(
+      '/api/v1/ea/generate-token',
+      { deviceName, platform }
+    );
+    return {
+      success: response.data.success,
+      message: response.data.message,
+      data: response.data.data
+    };
   },
 
   /**
    * Get all user tokens
    */
   async getTokens(): Promise<TokensResponse> {
-    const response = await apiClient.get('/ea/tokens');
-    return response.data;
+    const response = await axios.get<ApiResponse<EAToken[]>>('/api/v1/ea/tokens');
+    return {
+      success: response.data.success,
+      data: response.data.data
+    };
   },
 
   /**
    * Revoke a token
    */
   async revokeToken(tokenId: string): Promise<{ success: boolean; message?: string }> {
-    const response = await apiClient.delete(`/ea/tokens/${tokenId}`);
-    return response.data;
+    const response = await axios.delete<ApiResponse<void>>(`/api/v1/ea/tokens/${tokenId}`);
+    return {
+      success: response.data.success,
+      message: response.data.message
+    };
   },
 
   /**
    * Get EA connection status
    */
   async getStatus(): Promise<StatusResponse> {
-    const response = await apiClient.get('/ea/status');
-    return response.data;
+    const response = await axios.get<ApiResponse<StatusResponse['data']>>('/api/v1/ea/status');
+    return {
+      success: response.data.success,
+      data: response.data.data
+    };
   },
 };
