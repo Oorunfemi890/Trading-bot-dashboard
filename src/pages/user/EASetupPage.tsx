@@ -1,6 +1,6 @@
-// FILE: src/pages/user/EASetupPage.tsx
+// FILE: src/pages/user/EASetupPage.tsx (COMPLETE FIX)
 // =============================================
-// EA Setup & Management Page
+// EA Setup & Management Page - WITH CONNECTION STATUS
 // =============================================
 
 import { useState, useEffect } from 'react';
@@ -11,10 +11,12 @@ import { Badge } from '@/components/common/Badge/Badge';
 import { Spinner } from '@/components/common/Spinner/Spinner';
 import { 
   Download, Copy, CheckCircle, XCircle, AlertCircle, 
-  Monitor, Smartphone, RefreshCw, Trash2, Plus, Activity 
+  Monitor, Smartphone, RefreshCw, Trash2, Plus, Activity,
+  Power, PowerOff
 } from 'lucide-react';
 import { useEA } from '@/hooks/useEA';
 import { EAInstructions } from '@/components/features/ea/EAInstructions';
+import { toast } from 'sonner';
 
 export default function EASetupPage() {
   const { 
@@ -35,40 +37,67 @@ export default function EASetupPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       refreshStatus();
-    }, 30000); // Refresh every 30s
+    }, 30000);
 
     return () => clearInterval(interval);
   }, []);
 
   const handleGenerateToken = async () => {
     if (!deviceName.trim()) {
-      alert('Please enter a device name');
+      toast.error('Please enter a device name');
       return;
     }
 
-    const result = await generateToken(deviceName, platform);
-    if (result?.token) {
-      setGeneratedToken(result.token);
-      setDeviceName('');
-      setShowInstructions(true);
+    try {
+      const result = await generateToken(deviceName, platform);
+      if (result?.token) {
+        setGeneratedToken(result.token);
+        setDeviceName('');
+        setShowInstructions(true);
+        toast.success('Token generated successfully!');
+      }
+    } catch (error) {
+      toast.error('Failed to generate token');
     }
   };
 
   const handleCopyToken = (token: string) => {
     navigator.clipboard.writeText(token);
     setCopiedToken(token);
+    toast.success('Token copied to clipboard!');
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
   const handleRevokeToken = async (tokenId: string) => {
     if (confirm('Are you sure you want to revoke this token? The EA will stop working.')) {
-      await revokeToken(tokenId);
+      try {
+        await revokeToken(tokenId);
+        toast.success('Token revoked successfully');
+      } catch (error) {
+        toast.error('Failed to revoke token');
+      }
     }
   };
 
-  const downloadEA = () => {
-    // In production, this would download the actual EA file
-    alert('EA download will be available soon. Please contact support for the EA file.');
+  // ✅ NEW: Download function
+  const downloadEA = (selectedPlatform: 'MT4' | 'MT5') => {
+    try {
+      const fileName = selectedPlatform === 'MT5' ? 'TradingBotEA.ex5' : 'TradingBotEA.ex4';
+      const filePath = `/assets/${fileName}`;
+      
+      const link = document.createElement('a');
+      link.href = filePath;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success(`Downloading ${fileName}...`);
+      setShowInstructions(true);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download EA file. Please contact support.');
+    }
   };
 
   return (
@@ -158,7 +187,7 @@ export default function EASetupPage() {
               <div>
                 <h4 className="font-medium">Download EA</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Download the Expert Advisor file
+                  Choose your platform and download
                 </p>
               </div>
             </div>
@@ -185,19 +214,32 @@ export default function EASetupPage() {
               </div>
             </div>
           </div>
-          <div className="mt-4 flex gap-3">
-            <Button
-              variant="primary"
-              onClick={downloadEA}
-              leftIcon={<Download className="h-4 w-4" />}
-            >
-              Download EA
-            </Button>
+          
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="primary"
+                onClick={() => downloadEA('MT5')}
+                leftIcon={<Download className="h-4 w-4" />}
+                className="flex-1"
+              >
+                Download for MetaTrader 5 (.ex5)
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => downloadEA('MT4')}
+                leftIcon={<Download className="h-4 w-4" />}
+                className="flex-1"
+              >
+                Download for MetaTrader 4 (.ex4)
+              </Button>
+            </div>
             <Button
               variant="outline"
               onClick={() => setShowInstructions(!showInstructions)}
+              fullWidth
             >
-              {showInstructions ? 'Hide' : 'Show'} Full Instructions
+              {showInstructions ? 'Hide' : 'Show'} Installation Instructions
             </Button>
           </div>
         </div>
@@ -234,8 +276,9 @@ export default function EASetupPage() {
                 onClick={handleGenerateToken}
                 fullWidth
                 leftIcon={<Plus className="h-4 w-4" />}
+                disabled={isLoading}
               >
-                Generate Token
+                {isLoading ? 'Generating...' : 'Generate Token'}
               </Button>
             </div>
           </div>
@@ -274,7 +317,7 @@ export default function EASetupPage() {
         </Card>
       )}
 
-      {/* Active Tokens */}
+      {/* Active Tokens - WITH CONNECTION STATUS */}
       <Card>
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
@@ -288,21 +331,36 @@ export default function EASetupPage() {
             </div>
           ) : tokens && tokens.length > 0 ? (
             <div className="space-y-3">
-              {tokens.map((token) => (
+              {tokens.map((token: any) => (
                 <div
                   key={token.id}
-                  className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800"
+                  className={`flex items-center justify-between p-4 rounded-lg border ${
+                    token.isConnected 
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/10' 
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                      {token.platform === 'MT4' ? (
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      token.isConnected 
+                        ? 'bg-green-600' 
+                        : 'bg-blue-100 dark:bg-blue-900/30'
+                    }`}>
+                      {token.isConnected ? (
+                        <Power className="h-5 w-5 text-white" />
+                      ) : token.platform === 'MT4' ? (
                         <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       ) : (
                         <Smartphone className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       )}
                     </div>
                     <div>
-                      <p className="font-medium">{token.deviceName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{token.deviceName}</p>
+                        {token.isConnected && (
+                          <Badge variant="success">Connected</Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant={token.status === 'active' ? 'success' : 'gray'}>
                           {token.status}
@@ -319,14 +377,25 @@ export default function EASetupPage() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRevokeToken(token.id)}
-                    leftIcon={<Trash2 className="h-4 w-4" />}
-                  >
-                    Revoke
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRevokeToken(token.id)}
+                      leftIcon={<PowerOff className="h-4 w-4" />}
+                    >
+                      Revoke
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRevokeToken(token.id)}
+                      leftIcon={<Trash2 className="h-4 w-4" />}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

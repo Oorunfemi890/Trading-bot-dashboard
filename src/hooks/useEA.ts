@@ -14,6 +14,8 @@ export interface EAToken {
   lastUsedAt: Date | null;
   createdAt: Date;
   requestCount: number;
+  isConnected: boolean; 
+
 }
 
 export interface EAStatus {
