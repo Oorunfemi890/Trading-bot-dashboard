@@ -3,8 +3,10 @@
 // FILE: src/pages/user/DashboardPage.tsx (PRODUCTION READY)
 // ===================================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth, useWebSocket, useTrades } from "@/hooks";
+import { useTradeEvents } from "@/hooks/useTradeEvents";
+import { tradeService } from "@/services/api";
 import { StatsCard } from "@/components/features/dashboard/user/StatsCard";
 import { PerformanceChart } from "@/components/features/dashboard/PerformanceChart";
 import { RecentTrades } from "@/components/features/dashboard/RecentTrades";
@@ -24,54 +26,41 @@ import { toast } from 'sonner';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { socket, isConnected } = useWebSocket();
+  const { isConnected } = useWebSocket();
   const { stats, fetchStats } = useTrades();
-  
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadDashboard();
+  const [activeCount, setActiveCount] = useState<number | null>(null);
+  const [todayCount, setTodayCount] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const loadCounts = useCallback(async () => {
+    const [active, today] = await Promise.allSettled([
+      tradeService.getActiveTrades(),
+      tradeService.getTodayTrades(),
+    ]);
+    if (active.status === "fulfilled") setActiveCount(active.value.length);
+    if (today.status === "fulfilled") setTodayCount(today.value.length);
   }, []);
 
-  // ✅ WebSocket real-time updates
-  useEffect(() => {
-    if (!socket || !isConnected) return;
+  useEffect(() => { loadDashboard(); }, []);
 
-    socket.on("trade:opened", (data) => {
+  // Toasts are already shown app-wide by WebSocketContext; this page only refreshes data.
+  useTradeEvents(() => {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => {
       fetchStats();
-      toast.success(`New trade opened: ${data.symbol}`);
-    });
+      loadCounts();
+      setRefreshKey((k) => k + 1);
+    }, 750);
+  });
 
-    socket.on("trade:completed", (data) => {
-      fetchStats();
-      const isProfit = data.netProfit > 0;
-      if (isProfit) {
-        toast.success(`Trade closed: +$${data.netProfit.toFixed(2)}`);
-      } else {
-        toast.error(`Trade closed: -$${Math.abs(data.netProfit).toFixed(2)}`);
-      }
-    });
-
-    socket.on("tp:hit", (data) => {
-      toast.info(`TP${data.tpLevel} hit on ${data.symbol}`);
-      fetchStats();
-    });
-
-    socket.on("breakeven:activated", (data) => {
-      toast.info(`Breakeven activated on ${data.symbol}`);
-    });
-
-    return () => {
-      socket.off("trade:opened");
-      socket.off("trade:completed");
-      socket.off("tp:hit");
-      socket.off("breakeven:activated");
-    };
-  }, [socket, isConnected]);
+  useEffect(() => () => { if (refreshTimer.current) clearTimeout(refreshTimer.current); }, []);
 
   async function loadDashboard() {
     try {
-      await fetchStats();
+      await Promise.all([fetchStats(), loadCounts()]);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
       toast.error('Failed to load dashboard data');
@@ -88,18 +77,10 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ Safe stats with proper null checking
-  const hasStats = stats && stats.totalTrades > 0;
-  const safeStats = stats || {
-    netProfit: 0,
-    profitChange: 0,
-    winRate: 0,
-    winRateChange: 0,
-    activeTrades: 0,
-    todayTrades: 0,
-    todayChange: 0,
-    totalTrades: 0,
-  };
+  const hasStats =
+    (stats?.totalTrades ?? 0) > 0 || (activeCount ?? 0) > 0 || (todayCount ?? 0) > 0;
+  const netProfit = stats ? Number(stats.netProfit) : null;
+  const winRate = stats ? Number(stats.winRate) : null;
 
   return (
     <div className="space-y-6 p-6">
@@ -173,33 +154,15 @@ export default function DashboardPage() {
         <>
           {/* Quick Stats */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <StatsCard
-              title="Total Profit"
-              value={`$${safeStats.netProfit?.toFixed(2) || "0.00"}`}
-              change={safeStats.profitChange || 0}
+            <StatsCard title="Total Profit"
+              value={netProfit !== null && Number.isFinite(netProfit) ? `$${netProfit.toFixed(2)}` : "—"}
               icon={DollarSign}
-              trend={safeStats.netProfit >= 0 ? "up" : "down"}
-            />
-            <StatsCard
-              title="Win Rate"
-              value={`${safeStats.winRate?.toFixed(1) || "0"}%`}
-              change={safeStats.winRateChange || 0}
-              icon={Target}
-              trend="up"
-            />
-            <StatsCard
-              title="Active Trades"
-              value={safeStats.activeTrades || 0}
-              icon={Activity}
-              trend="neutral"
-            />
-            <StatsCard
-              title="Today's Trades"
-              value={safeStats.todayTrades || 0}
-              change={safeStats.todayChange || 0}
-              icon={BarChart3}
-              trend="neutral"
-            />
+              trend={netProfit !== null && netProfit < 0 ? "down" : netProfit ? "up" : "neutral"} />
+            <StatsCard title="Win Rate"
+              value={winRate !== null && Number.isFinite(winRate) ? `${winRate.toFixed(1)}%` : "—"}
+              icon={Target} trend="neutral" />
+            <StatsCard title="Active Trades" value={activeCount ?? "—"} icon={Activity} trend="neutral" />
+            <StatsCard title="Today's Trades" value={todayCount ?? "—"} icon={BarChart3} trend="neutral" />
           </div>
 
           {/* Main Content Grid */}
@@ -214,8 +177,8 @@ export default function DashboardPage() {
 
           {/* Active and Recent Trades */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <ActiveTrades />
-            <RecentTrades />
+            <ActiveTrades refreshKey={refreshKey} />
+            <RecentTrades refreshKey={refreshKey} />
           </div>
         </>
       )}

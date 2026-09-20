@@ -1,6 +1,7 @@
 // ===================================================
 // FILE: src/config/api.config.ts
 // ===================================================
+
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
   WS_URL: import.meta.env.VITE_WS_URL || 'http://localhost:3000',
@@ -23,6 +24,7 @@ export const API_CONFIG = {
       PROFILE: '/api/v1/users/profile',
       UPDATE: '/api/v1/users/profile',
       SETTINGS: '/api/v1/users/settings',
+      TRADING_ACCOUNT: '/api/v1/users/trading-account',
     },
     
     // Trade endpoints

@@ -5,6 +5,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks';
+import { useLiveAccount } from '@/hooks/useLiveAccount';
+import { formatCurrency } from '@/utils/format.util';
 import { Button } from '@/components/common/Button/Button';
 import { Input } from '@/components/common/Input/Input';
 import { Card } from '@/components/common/Card/Card';
@@ -21,6 +23,7 @@ import {
 
 export function RiskManagement() {
   const { user } = useAuth();
+  const account = useLiveAccount();
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({
     balanceUsagePercentage: 10,
@@ -58,11 +61,12 @@ export function RiskManagement() {
     }
   };
 
-  const calculateRisk = () => {
-    const accountBalance = 10000; // Get from actual account
-    const riskAmount = (accountBalance * settings.balanceUsagePercentage) / 100;
-    return riskAmount;
+  // Only computed from the REAL balance reported by the EA.
+  const calculateRisk = (): number | null => {
+    if (!account.available || account.balance === null) return null;
+    return (account.balance * settings.balanceUsagePercentage) / 100;
   };
+  const riskAmount = calculateRisk();
 
   return (
     <div className="space-y-6 p-6">
@@ -97,7 +101,11 @@ export function RiskManagement() {
                 Account Balance
               </span>
               <span className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                $10,000.00
+                {account.isLoading
+                  ? 'Loading...'
+                  : account.available && account.balance !== null
+                    ? formatCurrency(account.balance)
+                    : 'Unavailable'}
               </span>
             </div>
             <div className="flex justify-between items-center">
@@ -105,7 +113,7 @@ export function RiskManagement() {
                 Risk per Trade
               </span>
               <span className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                ${calculateRisk().toFixed(2)}
+                {riskAmount !== null ? formatCurrency(riskAmount) : '—'}
               </span>
             </div>
             <div className="flex justify-between items-center">

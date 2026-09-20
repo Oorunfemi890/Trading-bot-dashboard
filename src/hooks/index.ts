@@ -12,6 +12,7 @@ export { useModal } from '../context/ModalContext';
 
 // Custom hooks
 export { useApi } from './useApi';
+export { useTradeEvents } from './useTradeEvents';
 export { usePagination } from './usePagination';
 export { useInvitations } from './useInvitations';
 export { useUsers } from './useUsers';

@@ -32,18 +32,13 @@ export default function SignalsPage() {
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    socket.on('signal:detected', (data) => {
-      fetchSignals();
-      console.log('New signal detected:', data);
-    });
-
-    socket.on('signal:expired', () => {
-      fetchSignals();
-    });
-
+    const onDetected = () => { fetchSignals(); };
+    const onExpired = () => { fetchSignals(); };
+    socket.on('signal:detected', onDetected);
+    socket.on('signal:expired', onExpired);
     return () => {
-      socket.off('signal:detected');
-      socket.off('signal:expired');
+      socket.off('signal:detected', onDetected);
+      socket.off('signal:expired', onExpired);
     };
   }, [socket, isConnected]);
 

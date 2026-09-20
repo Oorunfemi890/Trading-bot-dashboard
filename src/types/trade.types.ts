@@ -3,35 +3,35 @@
 // ===================================================
 
 export enum TradeDirection {
-  BUY = 'buy',
-  SELL = 'sell',
+  BUY = "buy",
+  SELL = "sell",
 }
 
 export enum TradeStatus {
-  PENDING = 'pending',
-  OPEN = 'open',
-  CLOSED = 'closed',
-  CANCELLED = 'cancelled',
+  PENDING = "pending",
+  OPEN = "open",
+  CLOSED = "closed",
+  CANCELLED = "cancelled",
 }
 
 export enum PositionStatus {
-  PENDING = 'pending',
-  OPEN = 'open',
-  CLOSED = 'closed',
+  PENDING = "pending",
+  OPEN = "open",
+  CLOSED = "closed",
 }
 
 export enum CloseReason {
-  TP1 = 'tp1',
-  TP2 = 'tp2',
-  TP3 = 'tp3',
-  SL = 'sl',
-  BREAKEVEN_SL = 'breakeven_sl',
-  MANUAL = 'manual',
+  TP1 = "tp1",
+  TP2 = "tp2",
+  TP3 = "tp3",
+  SL = "sl",
+  BREAKEVEN_SL = "breakeven_sl",
+  MANUAL = "manual",
 }
 
 export enum OrderType {
-  MARKET = 'market',
-  LIMIT = 'limit',
+  MARKET = "market",
+  LIMIT = "limit",
 }
 
 export interface Trade {
@@ -116,16 +116,17 @@ export interface TradeFilters {
 }
 
 export interface TradeStatistics {
-  total: number;
-  open: number;
-  closed: number;
-  winning: number;
-  losing: number;
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  breakevenTrades: number;
   winRate: number;
   totalProfit: number;
   totalLoss: number;
   netProfit: number;
+  averageWin: number;
+  averageLoss: number;
   profitFactor: number;
-  averageTradeDuration: number;
-  breakevenActivations: number;
+  largestWin: number;
+  largestLoss: number;
 }

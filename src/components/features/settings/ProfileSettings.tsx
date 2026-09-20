@@ -4,7 +4,7 @@
 // ===================================================
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks';
+import { useAuth, useTrades, useChannels } from '@/hooks';
 import { Button } from '@/components/common/Button/Button';
 import { Input } from '@/components/common/Input/Input';
 import { Card } from '@/components/common/Card/Card';
@@ -14,6 +14,8 @@ import { User, Mail, Phone, MapPin, Save, Shield, Calendar } from 'lucide-react'
 
 export function ProfileSettings() {
   const { user } = useAuth();
+  const { stats, fetchStats } = useTrades();
+  const { subscriptions } = useChannels();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({
     fullName: '',
@@ -21,6 +23,10 @@ export function ProfileSettings() {
     phoneNumber: '',
     country: '',
   });
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   useEffect(() => {
     if (user) {
@@ -186,9 +192,6 @@ export function ProfileSettings() {
                 <div className="font-medium text-gray-900 dark:text-white">
                   Password
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Last changed {Math.floor(Math.random() * 30)} days ago
-                </p>
               </div>
             </div>
             <Button variant="outline" onClick={handlePasswordChange}>
@@ -207,7 +210,7 @@ export function ProfileSettings() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {Math.floor(Math.random() * 100)}
+                {stats ? stats.totalTrades ?? 0 : '—'}
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                 Total Trades
@@ -215,15 +218,15 @@ export function ProfileSettings() {
             </div>
             <div className="text-center p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {Math.floor(Math.random() * 365)}
+                {user?.createdAt ? Math.max(0, Math.floor((Date.now() - new Date(user.createdAt).getTime()) / 86400000)) : '—'}
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                Days Active
+                Days as Member
               </div>
             </div>
             <div className="text-center p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {Math.floor(Math.random() * 10)}
+                {subscriptions.filter((sub) => sub.isActive).length}
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                 Channels
@@ -231,7 +234,7 @@ export function ProfileSettings() {
             </div>
             <div className="text-center p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {Math.floor(Math.random() * 50) + 50}%
+                {stats && stats.totalTrades > 0 ? `${Number(stats.winRate).toFixed(1)}%` : '—'}
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                 Win Rate

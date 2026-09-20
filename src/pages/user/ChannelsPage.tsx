@@ -50,30 +50,24 @@ export default function UserChannelsPage() {
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    socket.on('channel:added', () => {
-      fetchChannels();
-      toast.info('A new channel has been added');
-    });
-
-    socket.on('channel:updated', () => {
-      fetchChannels();
-    });
-
-    // ✅ LISTEN FOR APPROVAL/REJECTION
-    socket.on('channel:request:approved', (data: any) => {
+    const onAdded = () => { fetchChannels(); toast.info('A new channel has been added'); };
+    const onUpdated = () => { fetchChannels(); };
+    const onRequestApproved = (data: any) => {
       toast.success(`Your request for "${data.channelTitle}" was approved! 🎉`);
-      fetchChannels(); // Refresh to show new channel
-    });
-
-    socket.on('channel:request:rejected', (data: any) => {
+      fetchChannels();
+    };
+    const onRequestRejected = (data: any) => {
       toast.error(`Your request for "${data.channelTitle}" was rejected. Reason: ${data.rejectionReason || 'N/A'}`);
-    });
-
+    };
+    socket.on('channel:added', onAdded);
+    socket.on('channel:updated', onUpdated);
+    socket.on('channel:request:approved', onRequestApproved);
+    socket.on('channel:request:rejected', onRequestRejected);
     return () => {
-      socket.off('channel:added');
-      socket.off('channel:updated');
-      socket.off('channel:request:approved');
-      socket.off('channel:request:rejected');
+      socket.off('channel:added', onAdded);
+      socket.off('channel:updated', onUpdated);
+      socket.off('channel:request:approved', onRequestApproved);
+      socket.off('channel:request:rejected', onRequestRejected);
     };
   }, [socket, isConnected]);
 

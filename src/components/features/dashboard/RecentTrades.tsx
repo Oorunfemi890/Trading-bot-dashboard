@@ -11,13 +11,13 @@ import { History, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
 import { tradeService } from '@/services/api';
 import { formatCurrency, formatDate } from '@/utils';
 
-export function RecentTrades() {
+export function RecentTrades({ refreshKey = 0 }: { refreshKey?: number }) {
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchRecentTrades();
-  }, []);
+  }, [refreshKey]);
 
   const fetchRecentTrades = async () => {
     try {

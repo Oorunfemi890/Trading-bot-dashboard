@@ -22,6 +22,8 @@ export enum SubscriptionTier {
 }
 
 export interface User {
+  country: string;
+  phoneNumber: string;
   id: string;
   email: string;
   fullName: string;

@@ -11,13 +11,13 @@ import { Activity, TrendingUp, TrendingDown, Shield, ExternalLink } from 'lucide
 import { tradeService } from '@/services/api';
 import { formatRelativeTime, formatCurrency } from '@/utils';
 
-export function ActiveTrades() {
+export function ActiveTrades({ refreshKey = 0 }: { refreshKey?: number }) {
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchActiveTrades();
-  }, []);
+  }, [refreshKey]);
 
   const fetchActiveTrades = async () => {
     try {
